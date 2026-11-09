@@ -1,0 +1,93 @@
+/* Smart Cart AI Custom Mobile-First Styling */
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Pulse animation for active delivery tracking */
+@keyframes softPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+.animate-soft-pulse {
+  animation: softPulse 2s infinite ease-in-out;
+}
+
+/* Glassmorphism effects */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Mobile Phone Mockup Container (when in phone frame mode) */
+.phone-mockup-wrapper {
+  max-width: 440px;
+  margin: 0 auto;
+  border-radius: 40px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.25), 0 0 0 12px #1e293b;
+  overflow: hidden;
+  background-color: #f8fafc;
+  min-height: 840px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.phone-mockup-notch {
+  width: 140px;
+  height: 22px;
+  background-color: #1e293b;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  margin: 0 auto 8px auto;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* Responsive mode (when phone mockup is turned off) */
+.desktop-view-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 85vh;
+  box-shadow: none;
+  border-radius: 16px;
+}
+
+/* OTP 6-Digit Code Badge */
+.otp-display-badge {
+  letter-spacing: 0.25em;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Status stepper line */
+.step-line-active {
+  background-color: #10b981;
+}
+.step-line-inactive {
+  background-color: #e2e8f0;
+}
+
+/* Modal transitions */
+.modal-backdrop {
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+}

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+*.db
+app/debug_uploads/
+
+# Flutter / Dart
+smart_cart_mobile/.dart_tool/
+smart_cart_mobile/build/
+smart_cart_mobile/.flutter-plugins
+smart_cart_mobile/.flutter-plugins-dependencies
+smart_cart_mobile/.packages
+smart_cart_mobile/.pub-cache/
+smart_cart_mobile/.pub/
+
+# Big binaries (APKs)
+*.apk
+app/static/SmartCart-Release.apk
+app/static/web/
+
+# Test artifacts
+crop_sugar.jpg
+deskewed_test.jpg
+ocr_test_out.json
+test_note.png
+latest_scan.jpg
+scratch_verify.py
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+

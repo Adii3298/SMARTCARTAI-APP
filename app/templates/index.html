@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Cart</title>
+    <!-- Mobile PWA App Manifest & Meta Tags (Android & iOS) -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#059669">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Smart Cart AI">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10b981',
+                        kirana: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+
+<body
+    class="bg-slate-900 text-slate-800 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Top Global Switcher & Navigation Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-3 py-2.5">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-2.5">
+                <div
+                    class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-900/40">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-sm font-black tracking-tight text-white flex items-center">
+                        Smart Cart <span class="text-emerald-400 ml-1">AI</span>
+                        <span
+                            class="ml-2 text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-900/60 text-emerald-300 font-bold border border-emerald-700/50">Kirana
+                            Connect</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400">Promoting Local Neighborhood Stores</p>
+                </div>
+            </div>
+
+            <!-- Dedicated Active Portal Badge (Strictly Isolated Roles) -->
+            <div id="portal-isolated-badge"
+                class="flex items-center bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+                <span id="active-portal-title" class="font-bold text-white tracking-wide">🛒 Customer Portal</span>
+                <span
+                    class="ml-2 text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 font-extrabold border border-emerald-800">ISOLATED
+                    PORTAL</span>
+            </div>
+
+            <!-- User Profile & Device Frame Toggle -->
+            <div class="flex items-center space-x-2">
+                <!-- Device View Toggle Button -->
+                <button id="view-mode-toggle-btn" onclick="toggleDeviceView()"
+                    class="hidden md:flex items-center text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    Mobile Frame
+                </button>
+
+                <!-- Current User Badge / Profile trigger -->
+                <div onclick="AuthModule.openProfileModal()"
+                    class="flex items-center bg-slate-800/90 hover:bg-slate-700 px-3 py-1 rounded-xl border border-slate-700 cursor-pointer transition">
+                    <div
+                        class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold mr-2">
+                        👤
+                    </div>
+                    <div class="text-left text-xs">
+                        <span id="nav-user-name" class="font-bold text-white block leading-tight">Pooja Sharma</span>
+                        <span id="nav-user-role"
+                            class="text-[9px] text-emerald-400 font-semibold uppercase leading-none">CUSTOMER</span>
+                    </div>
+                </div>
+
+                <!-- Auth Buttons -->
+                <button onclick="AuthModule.openLoginModal()" class="text-xs text-slate-300 hover:text-white px-2 py-1">
+                    Login
+                </button>
+                <button onclick="AuthModule.openRegisterModal('customer')"
+                    class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg shadow transition">
+                    Register
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Viewport Container (Togglable: Mobile Mockup vs Desktop Responsive) -->
+    <main class="py-4 px-2 sm:px-4">
+        <div id="main-viewport-container"
+            class="desktop-view-wrapper bg-slate-50 relative overflow-hidden transition-all duration-300">
+
+            <!-- Simulated Phone Notch (visible only in mobile frame mode) -->
+            <div id="phone-notch" class="phone-mockup-notch hidden"></div>
+
+            <!-- ============================================================== -->
+            <!-- 1. CUSTOMER DASHBOARD CONTAINER                               -->
+            <!-- ============================================================== -->
+            <div id="customer-dashboard" class="p-3 sm:p-6 space-y-5">
+
+                <!-- Welcome Banner -->
+                <div
+                    class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+                    <div class="relative z-10">
+                        <div
+                            class="inline-flex items-center bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold mb-2">
+                            📍 Delivering to: Indiranagar, Bengaluru (560038)
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-black tracking-tight">Scan Handwritten Kirana List</h2>
+                        <p class="text-xs sm:text-sm text-emerald-100 max-w-lg mt-1">
+                            Snap a photo of your handwritten grocery list. Our AI extracts every item, checks your local
+                            kirana inventory, and brings it to your door in 15 mins!
+                        </p>
+                    </div>
+                    <div
+                        class="absolute -right-6 -bottom-8 opacity-20 text-white text-9xl font-black select-none pointer-events-none">
+                        🛒
+                    </div>
+                </div>
+
+                <!-- Customer Active Order Live Tracking Stepper (Visible when active order exists) -->
+                <div id="customer-active-order-card"
+                    class="hidden bg-white border border-emerald-200 rounded-3xl p-5 shadow-lg relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span
+                                class="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-1">
+                                Active Order Tracker
+                            </span>
+                            <h3 class="text-base font-black text-slate-800">
+                                Order <span id="active-order-number" class="text-emerald-600">ORD-00000</span>
+                            </h3>
+                            <p class="text-xs text-slate-500">Store: <strong id="active-order-store-name">Gupta Kirana
+                                    Store</strong></p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">Est. Delivery</span>
+                            <span id="active-order-eta" class="text-lg font-black text-emerald-600">15 mins</span>
+                        </div>
+                    </div>
+
+                    <!-- 4-Step Stepper -->
+                    <div class="relative flex items-center justify-between mb-5 px-2">
+                        <div class="absolute left-6 right-6 top-3.5 h-1 bg-slate-200 -z-0">
+                            <div class="h-full bg-emerald-500 transition-all duration-500" style="width: 50%;"></div>
+                        </div>
+
+                        <div class="text-center z-10">
+                            <div id="step-indicator-1"
+                                class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shadow mx-auto">
+                                ✓</div>
+                            <span class="text-[10px] font-bold text-slate-700 block mt-1">List Sent</span>
+                        </div>
+                        <div class="text-center z-10">
+                            <div id="step-indicator-2"
+                                class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-medium mx-auto">
+                                •</div>
+                            <span class="text-[10px] font-bold text-slate-700 block mt-1">Packed</span>
+                        </div>
+                        <div class="text-center z-10">
+                            <div id="step-indicator-3"
+                                class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-medium mx-auto">
+                                •</div>
+                            <span class="text-[10px] font-bold text-slate-700 block mt-1">Out for Delivery</span>
+                        </div>
+                        <div class="text-center z-10">
+                            <div id="step-indicator-4"
+                                class="w-7 h-7 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-medium mx-auto">
+                                •</div>
+                            <span class="text-[10px] font-bold text-slate-700 block mt-1">Delivered</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 9 Confirmation Request from Merchant (Acceptance Panel) -->
+                    <div id="customer-order-confirm-request-panel"
+                        class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+                        <div class="flex items-center space-x-2 text-amber-800 font-bold text-xs mb-1">
+                            <span>📦 Merchant has finished packing your order!</span>
+                        </div>
+                        <p class="text-xs text-amber-700 mb-3">
+                            All available items have been packed fresh. Total confirmed bill is <strong
+                                id="confirm-request-bill" class="text-amber-900 text-sm">₹0</strong>.
+                            Please accept and choose your payment method to trigger immediate delivery:
+                        </p>
+                        <div class="flex space-x-2">
+                            <button onclick="CustomerModule.acceptMerchantPacking('COD')"
+                                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-xl text-xs shadow">
+                                Accept with Cash on Delivery (COD)
+                            </button>
+                            <button onclick="CustomerModule.acceptMerchantPacking('UPI')"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-xl text-xs shadow">
+                                Accept with Online UPI
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CRITICAL: 6-Digit Delivery Verification Code Display (Steps 9-15) -->
+                    <div id="customer-delivery-otp-box"
+                        class="hidden bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-4 text-white text-center shadow-md mb-4">
+                        <span class="text-[11px] uppercase tracking-widest font-semibold text-emerald-100 block">Your
+                            6-Digit Delivery Code</span>
+                        <div id="customer-6digit-code"
+                            class="text-3xl sm:text-4xl font-black otp-display-badge tracking-widest my-1 drop-shadow">
+                            482910
+                        </div>
+                        <p class="text-[11px] text-emerald-100">
+                            🔒 Share this code with the delivery partner upon arrival to complete delivery.
+                        </p>
+                    </div>
+
+                    <!-- Delivery Partner Live Details -->
+                    <div id="customer-delivery-partner-card"
+                        class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg">
+                                🛵
+                            </div>
+                            <div>
+                                <span id="partner-card-name" class="font-bold text-xs text-slate-800 block">Vikram
+                                    Singh</span>
+                                <span id="partner-card-vehicle" class="text-[10px] text-slate-500 block">Hero Splendor
+                                    (KA-04-EK-9821)</span>
+                            </div>
+                        </div>
+                        <a id="partner-card-phone" href="tel:"
+                            class="px-3 py-1.5 bg-emerald-600 text-white font-bold rounded-xl text-xs shadow flex items-center">
+                            📞 Call
+                        </a>
+                    </div>
+                </div>
+
+                <div id="customer-no-active-order" class="hidden"></div>
+
+                <!-- Customer Order Flow: Step 1-3 Upload & AI Extraction Area -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <h3 class="text-base font-black text-slate-800">1. Upload Handwritten List</h3>
+                            <p class="text-xs text-slate-500">Take a photo or upload an image of your paper list.</p>
+                        </div>
+                        <span
+                            class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-full font-bold">
+                            AI OCR & NLP
+                        </span>
+                    </div>
+
+                    <!-- Upload Drag/Drop / Camera Zone -->
+                    <div class="border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-2xl p-6 text-center bg-emerald-50/30 transition cursor-pointer relative"
+                        onclick="document.getElementById('ocr-file-input').click()">
+                        <input type="file" id="ocr-file-input" accept="image/*" capture="environment" class="hidden">
+                        <div
+                            class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2 text-2xl">
+                            📸
+                        </div>
+                        <span class="text-sm font-bold text-slate-800 block">Tap to Capture Photo or Upload Image</span>
+                        <span class="text-xs text-slate-400 block mt-0.5">Supports JPG, PNG, WEBP handwriting
+                            photos</span>
+                    </div>
+
+                    <!-- 1-Click Sample Realistic Lists for Quick Evaluation -->
+                    <div class="mt-4 pt-3 border-t border-slate-100">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                            OR TRY WITH 1-CLICK SAMPLE HANDWRITTEN LISTS:
+                        </span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button onclick="CustomerModule.useSamplePreset('weekly_ration')"
+                                class="flex items-center space-x-2.5 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl text-left transition">
+                                <img src="/static/samples/sample_weekly_ration.jpg"
+                                    class="w-10 h-10 object-cover rounded-lg border border-slate-200">
+                                <div>
+                                    <span class="font-bold text-xs text-slate-800 block">Weekly Kirana Ration (8
+                                        items)</span>
+                                    <span class="text-[10px] text-slate-500">Atta, Mustard Oil, Toor Dal, Milk,
+                                        Salt...</span>
+                                </div>
+                            </button>
+                            <button onclick="CustomerModule.useSamplePreset('breakfast')"
+                                class="flex items-center space-x-2.5 p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl text-left transition">
+                                <img src="/static/samples/sample_breakfast.jpg"
+                                    class="w-10 h-10 object-cover rounded-lg border border-slate-200">
+                                <div>
+                                    <span class="font-bold text-xs text-slate-800 block">Daily Essentials List (6
+                                        items)</span>
+                                    <span class="text-[10px] text-slate-500">Milk, Butter, Tata Tea, Maggi,
+                                        Parle-G...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading State Spinner -->
+                    <div id="ocr-loading-state"
+                        class="hidden mt-4 p-4 bg-emerald-50 rounded-2xl flex items-center justify-center space-x-3 text-emerald-800 text-xs font-bold">
+                        <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        <span>Running Computer Vision & NLP Parser on Handwriting...</span>
+                    </div>
+
+                    <!-- AI Detection OpenCV Annotated Visual Preview -->
+                    <div id="ocr-annotated-container" class="hidden mt-4">
+                        <span class="text-[11px] font-bold text-slate-500 block mb-1">OpenCV AI Detection Bounding
+                            Boxes:</span>
+                        <div class="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                            <img id="ocr-annotated-preview" src="" class="w-full max-h-64 object-contain bg-slate-100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Order Flow: Extracted Structured Items Table -->
+                <div id="extracted-items-section"
+                    class="hidden bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-base font-black text-slate-800">2. Review Extracted Items</h3>
+                            <p class="text-xs text-slate-500">Confirm quantities and units extracted from handwriting.
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="items-count-badge"
+                                class="text-xs font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">0
+                                items</span>
+                            <button onclick="CustomerModule.addNewItemRow()"
+                                class="text-xs bg-slate-100 hover:bg-slate-200 font-bold px-2 py-1 rounded-lg text-slate-700">
+                                + Add Item
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100">
+                                    <th class="py-2 px-3">Item / Brand</th>
+                                    <th class="py-2 px-2 text-center">Qty</th>
+                                    <th class="py-2 px-2">Unit</th>
+                                    <th class="py-2 px-2 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="extracted-items-tbody"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Step 4-5 Store Selector & Availability Check -->
+                    <div class="pt-4 border-t border-slate-100">
+                        <label class="block text-xs font-black text-slate-700 mb-1">
+                            3. Select Local Kirana Shop in Your Area:
+                        </label>
+                        <select id="customer-store-select"
+                            class="w-full text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:border-emerald-500 focus:outline-none">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Real-Time Store Availability & Pricing Summary Panel -->
+                    <div id="store-availability-panel"
+                        class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span
+                                    class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Real-Time
+                                    Store Inventory</span>
+                                <span id="avail-in-stock-count" class="text-xs font-black text-emerald-700">Checking
+                                    availability...</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] text-slate-400 block">Total Estimated Bill</span>
+                                <span id="avail-total-bill" class="text-xl font-black text-slate-900">₹0</span>
+                            </div>
+                        </div>
+
+                        <!-- Missing items banner with store switch suggestion! -->
+                        <div id="avail-missing-banner" class="hidden bg-rose-50 border border-rose-200 rounded-xl p-3">
+                            <span class="text-xs font-bold text-rose-800 block mb-1">⚠️ Some items are missing or out of
+                                stock at this store:</span>
+                            <ul id="avail-missing-items-list" class="space-y-1 my-1"></ul>
+                            <div class="mt-2 text-[11px] text-rose-700 flex items-center justify-between">
+                                <span>Tip: Switch to another local kirana store:</span>
+                                <button
+                                    onclick="CustomerModule.switchStore(CustomerModule.selectedStoreId === 1 ? 2 : 1)"
+                                    class="px-2 py-1 bg-white border border-rose-300 font-bold text-rose-700 rounded-lg hover:bg-rose-100 transition shadow-sm">
+                                    Switch Store ➔
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Available items breakdown -->
+                        <div class="bg-white rounded-xl p-3 border border-slate-100">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Available Items &
+                                Price Breakdown:</span>
+                            <div id="avail-items-breakdown" class="divide-y divide-slate-100"></div>
+                        </div>
+
+                        <!-- Submit Order Button -->
+                        <button onclick="CustomerModule.submitOrderToMerchant()"
+                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl text-sm flex items-center justify-center shadow-lg shadow-emerald-700/20 transition">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                            Finalize Store & Send List to Merchant for Packing
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Order History -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                    <h3 class="text-base font-black text-slate-800 mb-3">Order History</h3>
+                    <div id="customer-order-history-list" class="space-y-2"></div>
+                </div>
+
+            </div>
+
+
+            <!-- ============================================================== -->
+            <!-- 2. MERCHANT DASHBOARD CONTAINER                               -->
+            <!-- ============================================================== -->
+            <div id="merchant-dashboard" class="hidden p-3 sm:p-6 space-y-5">
+
+                <!-- Merchant Header -->
+                <div
+                    class="bg-gradient-to-r from-amber-600 to-orange-600 rounded-3xl p-5 text-white shadow-xl flex justify-between items-center">
+                    <div>
+                        <span
+                            class="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                            Kirana Merchant Portal
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-black tracking-tight mt-1">Gupta Kirana & General Store</h2>
+                        <p class="text-xs text-amber-100">Indiranagar Central Node • ⭐ 4.9 Rating</p>
+                    </div>
+                    <button onclick="MerchantModule.openAddProductModal()"
+                        class="bg-white text-amber-900 font-bold px-3 py-2 rounded-xl text-xs shadow hover:bg-amber-50 transition flex items-center">
+                        + Add Product
+                    </button>
+                </div>
+
+                <!-- Sub-tabs: Orders vs Inventory -->
+                <div class="flex space-x-2 bg-slate-200/70 p-1 rounded-xl">
+                    <button id="merchant-tab-orders-btn" onclick="MerchantModule.switchSubTab('orders')"
+                        class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm flex-1">
+                        📦 Customer Orders & Packing
+                    </button>
+                    <button id="merchant-tab-inv-btn" onclick="MerchantModule.switchSubTab('inventory')"
+                        class="px-4 py-2 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex-1">
+                        🏷️ Real-Time Inventory & Brands
+                    </button>
+                </div>
+
+                <!-- View 1: Merchant Orders & Packing -->
+                <div id="merchant-orders-view" class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-600">Filter Orders:</span>
+                        <div class="flex space-x-1 text-xs">
+                            <button onclick="MerchantModule.filterOrdersByStatus('all')"
+                                class="px-2 py-1 bg-slate-200 rounded-lg font-medium text-slate-700">All</button>
+                            <button onclick="MerchantModule.filterOrdersByStatus('PENDING_MERCHANT')"
+                                class="px-2 py-1 bg-amber-100 text-amber-800 rounded-lg font-bold">New Requests</button>
+                            <button onclick="MerchantModule.filterOrdersByStatus('DELIVERED')"
+                                class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-lg font-bold">Delivered</button>
+                        </div>
+                    </div>
+
+                    <!-- Orders Board List -->
+                    <div id="merchant-orders-list" class="space-y-3"></div>
+                </div>
+
+                <!-- View 2: Merchant Inventory Manager -->
+                <div id="merchant-inventory-view" class="hidden space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2">
+                        <div class="flex-1 min-w-[200px]">
+                            <input type="text" id="merchant-inv-search" placeholder="Search product name or brand..."
+                                class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <select id="merchant-inv-category-select"
+                            class="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white">
+                            <option value="All">All Categories</option>
+                            <option value="Flour & Grains">Flour & Grains</option>
+                            <option value="Oils & Ghee">Oils & Ghee</option>
+                            <option value="Pulses & Dals">Pulses & Dals</option>
+                            <option value="Dairy & Bread">Dairy & Bread</option>
+                            <option value="Spices & Seasoning">Spices & Seasoning</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Snacks & Instant">Snacks & Instant</option>
+                            <option value="Personal Care">Personal Care</option>
+                            <option value="Household Essentials">Household Essentials</option>
+                        </select>
+                        <span id="merchant-total-products-count" class="text-xs font-bold text-slate-500">0
+                            Products</span>
+                    </div>
+
+                    <!-- Inventory Table -->
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr
+                                        class="text-[10px] uppercase font-bold text-slate-400 bg-slate-50 border-b border-slate-100">
+                                        <th class="py-2.5 px-3">Product & Brand</th>
+                                        <th class="py-2.5 px-2 text-center">Unit Price (₹)</th>
+                                        <th class="py-2.5 px-2 text-center">Stock Qty</th>
+                                        <th class="py-2.5 px-2 text-center">In-Stock Status</th>
+                                        <th class="py-2.5 px-2 text-right">Delete</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="merchant-inv-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+
+            <!-- ============================================================== -->
+            <!-- 3. DELIVERY PARTNER DASHBOARD CONTAINER                       -->
+            <!-- ============================================================== -->
+            <div id="delivery-dashboard" class="hidden p-3 sm:p-6 space-y-5">
+
+                <!-- Partner Header -->
+                <div
+                    class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-5 text-white shadow-xl flex justify-between items-center">
+                    <div>
+                        <span
+                            class="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                            Delivery Partner Portal
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-black tracking-tight mt-1">Vikram Singh</h2>
+                        <p class="text-xs text-blue-100">Hero Splendor (KA-04-EK-9821) • Indiranagar Hub</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-blue-200 block">Total Earnings</span>
+                        <span id="delivery-earnings-badge" class="text-xl font-black text-white">₹0</span>
+                        <span id="delivery-completed-count" class="text-[10px] text-emerald-300 block font-bold">0
+                            Completed</span>
+                    </div>
+                </div>
+
+                <!-- Active Ongoing Delivery (If assigned) -->
+                <div id="delivery-active-gig-container"
+                    class="hidden bg-white border-2 border-emerald-500 rounded-3xl p-5 shadow-lg space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span
+                                class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                Active Delivery in Progress
+                            </span>
+                            <h3 class="text-base font-black text-slate-800 mt-1">
+                                Order <span id="active-gig-order-num" class="text-emerald-600">ORD-00000</span>
+                            </h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">Payout</span>
+                            <span class="text-base font-black text-emerald-600">+₹45.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Pickup & Drop locations -->
+                    <div class="space-y-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
+                        <div>
+                            <span class="text-[10px] text-slate-400 font-bold block">1. PICKUP STORE:</span>
+                            <span id="active-gig-store-name" class="font-bold text-slate-800 block">Gupta Kirana
+                                Store</span>
+                            <span id="active-gig-store-addr" class="text-slate-500 text-[11px] block">100 Feet Road,
+                                Indiranagar</span>
+                        </div>
+                        <div class="pt-2 border-t border-slate-200">
+                            <span class="text-[10px] text-slate-400 font-bold block">2. CUSTOMER DROP:</span>
+                            <span id="active-gig-cust-name" class="font-bold text-slate-800 block">Pooja Sharma</span>
+                            <span id="active-gig-cust-addr" class="text-slate-500 text-[11px] block">Flat 304, Palm
+                                Grove Apts</span>
+                        </div>
+                    </div>
+
+                    <!-- Order Total & Call -->
+                    <div class="flex justify-between items-center text-xs">
+                        <span>Total to Collect: <strong id="active-gig-amount"
+                                class="text-sm font-black text-slate-900">₹0</strong> (<span
+                                id="active-gig-paymode">COD</span>)</span>
+                        <a id="active-gig-cust-phone" href="tel:"
+                            class="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 font-bold rounded-xl text-xs">
+                            📞 Call Customer
+                        </a>
+                    </div>
+
+                    <!-- CRITICAL STEP 11-15: Complete Delivery Button (Prompts for Customer's 6-digit OTP code) -->
+                    <button onclick="DeliveryModule.openVerificationModal()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center justify-center shadow-lg shadow-emerald-700/20 transition">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Verify 6-Digit Delivery Code & Complete
+                    </button>
+                </div>
+
+                <!-- Available Delivery Gigs -->
+                <div class="space-y-3">
+                    <h3 class="text-base font-black text-slate-800">Available Delivery Gigs in Indiranagar</h3>
+                    <div id="delivery-available-gigs-container"></div>
+                    <div id="delivery-no-gigs-msg"
+                        class="p-8 text-center text-slate-400 text-xs bg-white rounded-2xl border border-slate-200 hidden">
+                        No pending delivery requests in your area right now. Gigs appear when customers place orders!
+                    </div>
+                </div>
+
+                <!-- Delivery History -->
+                <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm">
+                    <h3 class="text-base font-black text-slate-800 mb-3">Completed Gigs</h3>
+                    <div id="delivery-history-list" class="space-y-2"></div>
+                </div>
+
+            </div>
+
+
+            <!-- ============================================================== -->
+            <!-- 4. ADMIN DASHBOARD CONTAINER                                  -->
+            <!-- ============================================================== -->
+            <div id="admin-dashboard" class="hidden p-3 sm:p-6 space-y-5">
+
+                <!-- Admin Header -->
+                <div
+                    class="bg-gradient-to-r from-purple-700 to-indigo-800 rounded-3xl p-5 text-white shadow-xl flex justify-between items-center">
+                    <div>
+                        <span
+                            class="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase">
+                            Smart Cart AI Platform Admin
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-black tracking-tight mt-1">Platform Control Center</h2>
+                        <p class="text-xs text-purple-200">System Analytics, Smart Nodes, & Multi-Role Governance</p>
+                    </div>
+                    <button onclick="AdminModule.openAddNodeModal()"
+                        class="bg-white text-purple-900 font-bold px-3 py-2 rounded-xl text-xs shadow hover:bg-purple-50 transition">
+                        + New Node
+                    </button>
+                </div>
+
+                <!-- Sub-tabs: Analytics, Users, Nodes, Logs -->
+                <div class="flex space-x-1 bg-slate-200/70 p-1 rounded-xl text-xs">
+                    <button id="admin-tab-analytics-btn" onclick="AdminModule.switchSubTab('analytics')"
+                        class="px-3 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm flex-1">
+                        📊 Analytics
+                    </button>
+                    <button id="admin-tab-users-btn" onclick="AdminModule.switchSubTab('users')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex-1">
+                        👥 Users Directory
+                    </button>
+                    <button id="admin-tab-nodes-btn" onclick="AdminModule.switchSubTab('nodes')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex-1">
+                        🌐 Smart Nodes
+                    </button>
+                    <button id="admin-tab-logs-btn" onclick="AdminModule.switchSubTab('logs')"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100 flex-1">
+                        📜 Activity Logs
+                    </button>
+                </div>
+
+                <!-- Tab 1: Analytics KPI Cards -->
+                <div id="admin-analytics-view" class="space-y-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Total GMV /
+                                Revenue</span>
+                            <span id="admin-gmv-stat" class="text-xl font-black text-emerald-600 block mt-1">₹0</span>
+                            <span class="text-[10px] text-emerald-500 font-semibold">↑ Kirana orders</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Total Orders</span>
+                            <span id="admin-orders-stat" class="text-xl font-black text-slate-800 block mt-1">0</span>
+                            <span class="text-[10px] text-slate-400">Processed</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Active Kirana
+                                Stores</span>
+                            <span id="admin-stores-stat" class="text-xl font-black text-amber-600 block mt-1">0</span>
+                            <span class="text-[10px] text-amber-500 font-semibold">Indiranagar cluster</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Delivery Partners</span>
+                            <span id="admin-delivery-stat" class="text-xl font-black text-blue-600 block mt-1">0</span>
+                            <span class="text-[10px] text-blue-500 font-semibold">Active riders</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Registered
+                                Customers</span>
+                            <span id="admin-cust-stat" class="text-xl font-black text-slate-800 block mt-1">0</span>
+                            <span class="text-[10px] text-slate-400">Households</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase block">Smart Cart Nodes</span>
+                            <span id="admin-nodes-stat" class="text-xl font-black text-purple-600 block mt-1">0</span>
+                            <span class="text-[10px] text-purple-500 font-semibold">Operational</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Users Directory -->
+                <div id="admin-users-view" class="hidden space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-slate-800">User Management</h3>
+                        <select id="admin-user-role-filter"
+                            class="text-xs border border-slate-200 rounded-xl px-2.5 py-1 bg-white">
+                            <option value="all">All Roles</option>
+                            <option value="customer">Customers</option>
+                            <option value="merchant">Merchants</option>
+                            <option value="delivery">Delivery Partners</option>
+                            <option value="admin">Admins</option>
+                        </select>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr
+                                        class="text-[10px] uppercase font-bold text-slate-400 bg-slate-50 border-b border-slate-100">
+                                        <th class="py-2.5 px-3">Name / User ID</th>
+                                        <th class="py-2.5 px-2">Role</th>
+                                        <th class="py-2.5 px-2">Mobile</th>
+                                        <th class="py-2.5 px-2">Area</th>
+                                        <th class="py-2.5 px-2 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Smart Cart Nodes -->
+                <div id="admin-nodes-view" class="hidden space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800">Configured Smart Cart Nodes</h3>
+                    <div id="admin-nodes-list"></div>
+                </div>
+
+                <!-- Tab 4: Activity Logs -->
+                <div id="admin-logs-view" class="hidden space-y-4">
+                    <h3 class="text-sm font-bold text-slate-800">Platform Activity Stream</h3>
+                    <div id="admin-logs-list" class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+
+    <!-- ============================================================== -->
+    <!-- MODALS & POPUPS                                                -->
+    <!-- ============================================================== -->
+
+    <!-- 1. Interactive CAPTCHA Login Modal (Core Module 1, Step 2-3) -->
+    <div id="login-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border border-slate-100">
+            <button onclick="AuthModule.closeLoginModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <div class="text-center mb-4">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+                    🔐
+                </div>
+                <h3 class="text-lg font-black text-slate-800">Smart Cart AI Login</h3>
+                <p class="text-xs text-slate-500">Sign in to your role dashboard with CAPTCHA verification</p>
+            </div>
+
+            <form id="login-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">User ID or Mobile Number</label>
+                    <input type="text" id="login-id-input" required placeholder="e.g. CUST1001 or 9876543210"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:border-emerald-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="login-password-input" required placeholder="Enter your password"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:border-emerald-500 focus:outline-none">
+                </div>
+
+                <!-- Interactive CAPTCHA Box -->
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1.5 flex justify-between items-center">
+                        <span>Interactive CAPTCHA Verification</span>
+                        <span class="text-[9px] text-emerald-600 font-normal">Case-insensitive</span>
+                    </label>
+                    <div class="flex items-center space-x-2 mb-2">
+                        <img id="captcha-image-display" src="" alt="CAPTCHA"
+                            class="h-10 rounded-lg border border-slate-300 bg-white">
+                        <button type="button" id="refresh-captcha-btn"
+                            class="p-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs"
+                            title="Refresh CAPTCHA">
+                            🔄
+                        </button>
+                    </div>
+                    <input type="text" id="login-captcha-input" required placeholder="Enter the 5 characters shown"
+                        class="w-full text-xs uppercase tracking-widest font-mono text-center border border-slate-200 rounded-xl px-3 py-2 focus:border-emerald-500 focus:outline-none bg-white">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl text-xs shadow transition">
+                    Verify & Access Dashboard
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+                <span class="text-xs text-slate-500">Need a new account?</span>
+                <button onclick="AuthModule.openRegisterModal('customer')"
+                    class="text-xs text-emerald-600 font-bold ml-1 hover:underline">
+                    Register Here
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 2. 4-Role Registration Modal (Core Module 1, Step 1) -->
+    <div id="register-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div
+            class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <button onclick="AuthModule.closeRegisterModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <div class="text-center mb-4">
+                <h3 class="text-lg font-black text-slate-800">4-Role Registration</h3>
+                <p class="text-xs text-slate-500">Register as Customer, Merchant, Delivery Partner, or Admin</p>
+            </div>
+
+            <form id="register-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Role</label>
+                    <select id="reg-role-select"
+                        class="w-full text-xs font-bold text-emerald-700 border border-slate-200 rounded-xl px-3 py-2 bg-emerald-50/50">
+                        <option value="customer">Customer (Household Grocery Shopper)</option>
+                        <option value="merchant">Merchant (Local Kirana Store Owner)</option>
+                        <option value="delivery">Delivery Partner (Rider)</option>
+                        <option value="admin">Admin (System Administrator)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                        <input type="text" id="reg-name-input" required placeholder="e.g. Ramesh Gupta"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mobile Number *</label>
+                        <input type="tel" id="reg-mobile-input" required placeholder="10-digit mobile"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Email (Optional)</label>
+                    <input type="email" id="reg-email-input" placeholder="email@example.com"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Area / Locality</label>
+                        <input type="text" id="reg-area-input" value="Indiranagar"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pincode</label>
+                        <input type="text" id="reg-pincode-input" value="560038"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Address</label>
+                    <input type="text" id="reg-address-input" placeholder="House / Flat / Street Details"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+
+                <!-- Conditional Merchant Fields -->
+                <div id="reg-merchant-fields"
+                    class="hidden p-3 bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
+                    <span class="text-xs font-bold text-amber-800 block">🏪 Kirana Store Details:</span>
+                    <div>
+                        <label class="block text-[11px] font-medium text-amber-800">Store Name</label>
+                        <input type="text" id="reg-store-name-input" placeholder="e.g. Shri Balaji Kirana"
+                            class="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-1.5 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-amber-800">Store Address</label>
+                        <input type="text" id="reg-store-addr-input" placeholder="Store street address"
+                            class="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-1.5 bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-amber-800">UPI ID for payments</label>
+                        <input type="text" id="reg-upi-input" placeholder="store@upi"
+                            class="w-full text-xs border border-amber-300 rounded-lg px-2.5 py-1.5 bg-white">
+                    </div>
+                </div>
+
+                <!-- Conditional Delivery Partner Fields -->
+                <div id="reg-delivery-fields"
+                    class="hidden p-3 bg-blue-50 rounded-2xl border border-blue-200 space-y-2">
+                    <span class="text-xs font-bold text-blue-800 block">🛵 Delivery Partner Details:</span>
+                    <div>
+                        <label class="block text-[11px] font-medium text-blue-800">Vehicle Type</label>
+                        <select id="reg-vehicle-type-select"
+                            class="w-full text-xs border border-blue-300 rounded-lg px-2.5 py-1.5 bg-white">
+                            <option value="Motorbike">Motorbike</option>
+                            <option value="Scooter">Scooter</option>
+                            <option value="Bicycle">Bicycle</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-blue-800">Vehicle Number Plate</label>
+                        <input type="text" id="reg-vehicle-num-input" placeholder="KA-04-XX-1234"
+                            class="w-full text-xs border border-blue-300 rounded-lg px-2.5 py-1.5 bg-white">
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl text-xs shadow transition mt-2">
+                    Complete Registration & Send Credentials
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 3. Simulated SMS Credentials Notification Modal (Core Module 1, Step 1) -->
+    <div id="sms-notification-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div
+            class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border-2 border-emerald-500 animate-soft-pulse">
+            <button onclick="closeSmsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <div class="text-center mb-4">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2 text-2xl">
+                    📲
+                </div>
+                <h3 class="text-base font-black text-slate-800">Simulated SMS Alert</h3>
+                <span
+                    class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Delivered to Mobile
+                </span>
+            </div>
+
+            <div class="bg-slate-900 text-emerald-400 p-4 rounded-2xl font-mono text-xs whitespace-pre-line shadow-inner mb-4 border border-slate-800"
+                id="sms-notification-text">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div class="space-y-2">
+                <button id="sms-copy-id-btn"
+                    class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">
+                    📋 Copy User ID
+                </button>
+                <button id="sms-quick-login-btn"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl text-xs shadow">
+                    Auto-fill & Proceed to Login ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 4. Delivery Partner 6-Digit OTP Verification Modal (Steps 11-15) -->
+    <div id="delivery-verify-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border border-slate-100">
+            <button onclick="DeliveryModule.closeVerificationModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <div class="text-center mb-4">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-2 text-2xl">
+                    🔑
+                </div>
+                <h3 class="text-base font-black text-slate-800">Verify 6-Digit Delivery Code</h3>
+                <p class="text-xs text-slate-500">Ask the customer for their 6-digit delivery code upon arrival.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1 text-center">Enter 6-Digit Code</label>
+                    <input type="text" id="delivery-otp-input" maxlength="6" placeholder="482910"
+                        class="w-full text-center text-3xl font-black font-mono tracking-widest border-2 border-emerald-400 rounded-2xl py-3 focus:outline-none focus:border-emerald-600 bg-emerald-50/30">
+                </div>
+
+                <button onclick="DeliveryModule.verifyDeliveryCode()"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow">
+                    Verify Code & Complete Order
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 5. User Profile Management Modal -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border border-slate-100">
+            <button onclick="AuthModule.closeProfileModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <h3 class="text-base font-black text-slate-800 mb-3">Profile Management</h3>
+
+            <form onsubmit="AuthModule.handleSaveProfile(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Name</label>
+                    <input type="text" id="prof-name-input"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Mobile</label>
+                    <input type="text" id="prof-phone-input" readonly
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 bg-slate-100 text-slate-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+                    <input type="email" id="prof-email-input"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Address</label>
+                    <input type="text" id="prof-address-input"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Area</label>
+                        <input type="text" id="prof-area-input"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Pincode</label>
+                        <input type="text" id="prof-pincode-input"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+
+                <div id="prof-store-group" class="hidden">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Store Name</label>
+                    <input type="text" id="prof-store-name-input"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+
+                <div id="prof-vehicle-group" class="hidden">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Vehicle Plate</label>
+                    <input type="text" id="prof-vehicle-num-input"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+
+                <div id="prof-online-toggle-group"
+                    class="hidden flex items-center justify-between p-2 bg-slate-50 rounded-xl">
+                    <span class="text-xs font-bold text-slate-700">Online Status for Deliveries</span>
+                    <input type="checkbox" id="prof-online-toggle" class="w-4 h-4 text-emerald-600 rounded">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow mt-2">
+                    Save Profile Changes
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 6. Merchant Add Product Modal -->
+    <div id="merchant-add-product-modal"
+        class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border border-slate-100">
+            <button onclick="MerchantModule.closeAddProductModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <h3 class="text-base font-black text-slate-800 mb-3">Add Product to Inventory</h3>
+
+            <form id="merchant-add-product-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Product Name *</label>
+                    <input type="text" id="new-prod-name" required placeholder="e.g. Fortune Mustard Oil"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Brand</label>
+                    <input type="text" id="new-prod-brand" placeholder="e.g. Fortune"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                        <select id="new-prod-cat"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-2 py-2 bg-white">
+                            <option value="Flour & Grains">Flour & Grains</option>
+                            <option value="Oils & Ghee">Oils & Ghee</option>
+                            <option value="Pulses & Dals">Pulses & Dals</option>
+                            <option value="Dairy & Bread">Dairy & Bread</option>
+                            <option value="Spices & Seasoning">Spices & Seasoning</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Snacks & Instant">Snacks & Instant</option>
+                            <option value="Personal Care">Personal Care</option>
+                            <option value="Household Essentials">Household Essentials</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Unit</label>
+                        <select id="new-prod-unit"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-2 py-2 bg-white">
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="l">l</option>
+                            <option value="packet">packet</option>
+                            <option value="piece">piece</option>
+                            <option value="box">box</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Unit Price (₹) *</label>
+                        <input type="number" id="new-prod-price" required step="1" value="50"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Stock Quantity *</label>
+                        <input type="number" id="new-prod-stock" required step="1" value="50"
+                            class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow mt-2">
+                    Add Product to Store
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- 7. Admin Add Node Modal -->
+    <div id="admin-add-node-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl relative border border-slate-100">
+            <button onclick="AdminModule.closeAddNodeModal()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                ✕
+            </button>
+            <h3 class="text-base font-black text-slate-800 mb-3">Create Smart Cart Node</h3>
+
+            <form id="admin-add-node-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Node Code *</label>
+                    <input type="text" id="new-node-code" required placeholder="e.g. NODE-BLR-04"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Node Name *</label>
+                    <input type="text" id="new-node-name" required placeholder="e.g. Jayanagar Smart Hub"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Area *</label>
+                    <input type="text" id="new-node-area" required placeholder="e.g. Jayanagar"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pincode *</label>
+                    <input type="text" id="new-node-pincode" required placeholder="e.g. 560041"
+                        class="w-full text-xs border border-slate-200 rounded-xl px-3 py-2">
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow mt-2">
+                    Initialize Smart Node
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Global Toast Notification Component -->
+    <div id="toast-notification" class="hidden">
+        <div id="toast-icon"></div>
+        <div id="toast-message"></div>
+    </div>
+
+    <!-- Mobile PWA Installation Banner (Android & iOS) -->
+    <div id="pwa-install-banner"
+        class="hidden fixed bottom-4 left-4 right-4 max-w-sm mx-auto z-50 bg-slate-900 border-2 border-emerald-500 rounded-2xl p-4 shadow-2xl text-white flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <img src="/static/icons/icon-96.png" class="w-10 h-10 rounded-xl shadow">
+            <div>
+                <span class="font-bold text-xs block text-white">Install Smart Cart AI</span>
+                <span class="text-[10px] text-emerald-300 block">Add to Home Screen (Android / iOS)</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="pwa-install-btn"
+                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition">
+                Install App
+            </button>
+            <button onclick="document.getElementById('pwa-install-banner').classList.add('hidden')"
+                class="text-slate-400 hover:text-white p-1 text-xs">
+                ✕
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/customer.js"></script>
+    <script src="/static/js/merchant.js"></script>
+    <script src="/static/js/delivery.js"></script>
+    <script src="/static/js/admin.js"></script>
+
+    <!-- PWA Service Worker & Install Handler -->
+    <script>
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) banner.classList.remove('hidden');
+        });
+
+        document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('Smart Cart AI installed on your home screen!', 'success');
+                }
+                deferredPrompt = null;
+                document.getElementById('pwa-install-banner')?.classList.add('hidden');
+            } else {
+                // iOS guidance
+                alert('On iPhone / iPad: Tap the Share button in Safari, then tap "Add to Home Screen" to install!');
+            }
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(reg => console.log('PWA ServiceWorker registered:', reg.scope))
+                    .catch(err => console.log('ServiceWorker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+
+</html>
