@@ -420,15 +420,7 @@ class PortalGatewayScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Footer Note
-              const Center(
-                child: Text(
-                  'Smart Cart AI Android Edition • 100% Python FastAPI Backend + Flutter',
-                  style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
-                ),
-              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
