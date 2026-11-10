@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../widgets/server_config_dialog.dart';
@@ -30,8 +29,8 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
   final _regMobileController = TextEditingController();
   final _regEmailController = TextEditingController();
   final _regAddressController = TextEditingController();
-  final _regAreaController = TextEditingController(text: 'Indiranagar');
-  final _regPincodeController = TextEditingController(text: '560038');
+  final _regAreaController = TextEditingController();
+  final _regPincodeController = TextEditingController();
 
   // Merchant specific
   final _storeNameController = TextEditingController();
@@ -61,44 +60,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
     final initialIdx = widget.portalRole == 'admin' ? 0 : widget.initialTabIndex;
     _tabController = TabController(length: tabCount, vsync: this, initialIndex: initialIdx);
     _loadCaptcha();
-    _fillDefaultDemoFields();
-    _fillPreseededLoginCredentials();
-  }
-
-  void _fillDefaultDemoFields() {
-    // Fill realistic fields based on portal role
-    switch (widget.portalRole) {
-      case 'customer':
-        _regNameController.text = 'Pooja Sharma';
-        _regMobileController.text = '9876543210';
-        _regEmailController.text = 'pooja.sharma@gmail.com';
-        _regAddressController.text = 'Flat 204, Green Glen Apartment, Indiranagar';
-        _regAreaController.text = 'Indiranagar';
-        _regPincodeController.text = '560038';
-        break;
-      case 'merchant':
-        _regNameController.text = 'Ramesh Patel';
-        _regMobileController.text = '9845012345';
-        _regEmailController.text = 'ramesh.patel@kirana.in';
-        _storeNameController.text = 'Navjeevan Supermart';
-        _upiController.text = 'navjeevan@upi';
-        _regAddressController.text = '14th Main, 100ft Road, Indiranagar';
-        _regAreaController.text = 'Indiranagar';
-        _regPincodeController.text = '560038';
-        break;
-      case 'delivery':
-        _regNameController.text = 'Vikram Singh';
-        _regMobileController.text = '9731011223';
-        _regEmailController.text = 'vikram.rider@smartcart.ai';
-        _vehicleType = 'Bike';
-        _vehicleNumberController.text = 'KA-04-EK-9821';
-        _regAddressController.text = 'HAL 2nd Stage, Indiranagar';
-        _regAreaController.text = 'Indiranagar';
-        _regPincodeController.text = '560038';
-        break;
-      case 'admin':
-        break;
-    }
   }
 
   @override
@@ -138,80 +99,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
     } finally {
       if (mounted) setState(() => _isLoadingCaptcha = false);
     }
-  }
-
-  void _fillSampleRegistrationData() {
-    final randomSuffix = (1000 + Random().nextInt(8999)).toString();
-    switch (widget.portalRole) {
-      case 'customer':
-        _regNameController.text = 'Pooja Sharma';
-        _regMobileController.text = '98765$randomSuffix';
-        _regEmailController.text = 'pooja.$randomSuffix@gmail.com';
-        _regAddressController.text = 'Flat 204, Green Glen Apartment, Indiranagar';
-        _regAreaController.text = 'Indiranagar';
-        _regPincodeController.text = '560038';
-        break;
-      case 'merchant':
-        _regNameController.text = 'Ramesh Patel';
-        _regMobileController.text = '98450$randomSuffix';
-        _regEmailController.text = 'patelstore.$randomSuffix@kirana.in';
-        _storeNameController.text = 'Patel Super Kirana & Provisions';
-        _upiController.text = 'patelkirana$randomSuffix@upi';
-        _regAddressController.text = '14th Main, 100ft Road, Indiranagar';
-        _regAreaController.text = 'Indiranagar';
-        _regPincodeController.text = '560038';
-        break;
-      case 'delivery':
-        _regNameController.text = 'Arjun Verma';
-        _regMobileController.text = '97412$randomSuffix';
-        _regEmailController.text = 'arjun.rider$randomSuffix@smartcart.ai';
-        _vehicleType = 'Bike';
-        _vehicleNumberController.text = 'KA-04-EV-$randomSuffix';
-        _regAddressController.text = 'HAL 2nd Stage, Indiranagar';
-        _regAreaController.text = 'Indiranagar';
-        _regPincodeController.text = '560038';
-        break;
-    }
-    setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Generated fresh test details for ${widget.portalRole.toUpperCase()}!'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
-
-  void _fillPreseededLoginCredentials({int? storeId}) {
-    switch (widget.portalRole) {
-      case 'customer':
-        _loginIdController.text = 'CUST1001';
-        _passwordController.text = 'cust123';
-        break;
-      case 'merchant':
-        if (storeId == 2) {
-          _loginIdController.text = 'MERC2002';
-          _passwordController.text = 'merc123';
-        } else {
-          _loginIdController.text = 'MERC2001';
-          _passwordController.text = 'merc123';
-        }
-        break;
-      case 'delivery':
-        _loginIdController.text = 'DELV3001';
-        _passwordController.text = 'delv123';
-        break;
-      case 'admin':
-        _loginIdController.text = 'ADMN1000';
-        _passwordController.text = 'admin123';
-        break;
-    }
-    setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Filled credentials for ${storeId == 2 ? 'More Provision (MERC2002)' : widget.portalRole.toUpperCase()}!'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
   }
 
   Future<void> _handleRegister() async {
@@ -406,24 +293,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
         ),
       );
       _loadCaptcha();
-    } finally {
-      if (mounted) setState(() => _isLoggingIn = false);
-    }
-  }
-
-  Future<void> _handleQuickDemoLogin({int? storeId}) async {
-    _fillPreseededLoginCredentials(storeId: storeId);
-    setState(() => _isLoggingIn = true);
-    try {
-      await ApiService().quickSwitchRole(widget.portalRole, storeId: storeId);
-      widget.onAuthSuccess();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Demo login error: $e'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
     } finally {
       if (mounted) setState(() => _isLoggingIn = false);
     }
@@ -647,18 +516,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                         '${widget.portalRole.toUpperCase()} REGISTRATION',
                         style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: themeColor),
                       ),
-                      const Spacer(),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          foregroundColor: themeColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        icon: const Icon(Icons.auto_fix_high_rounded, size: 14),
-                        label: const Text('Fill Test Details', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        onPressed: _fillSampleRegistrationData,
-                      ),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -668,7 +525,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                     controller: _regNameController,
                     decoration: InputDecoration(
                       labelText: 'Full Name *',
-                      hintText: widget.portalRole == 'customer' ? 'e.g. Pooja Sharma' : 'e.g. Ramesh Patel',
+                      hintText: 'Enter full name',
                       prefixIcon: const Icon(Icons.person_outline_rounded),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -682,7 +539,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
                       labelText: 'Mobile Number (10 Digits) *',
-                      hintText: 'e.g. 9876543210',
+                      hintText: 'Enter 10-digit mobile number',
                       prefixIcon: const Icon(Icons.phone_iphone_rounded),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -696,7 +553,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email Address (Optional)',
-                      hintText: 'e.g. name@example.com',
+                      hintText: 'Enter email address (optional)',
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -709,7 +566,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                     controller: _regAddressController,
                     decoration: InputDecoration(
                       labelText: widget.portalRole == 'customer' ? 'Delivery Address *' : 'Store / Operations Address *',
-                      hintText: 'e.g. Flat 204, Green Glen Apartment',
+                      hintText: 'House / Flat No., Street, Landmark',
                       prefixIcon: const Icon(Icons.home_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -725,7 +582,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                           controller: _regAreaController,
                           decoration: InputDecoration(
                             labelText: 'Neighborhood / Area',
-                            hintText: 'Indiranagar',
+                            hintText: 'Area or Locality',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             filled: true,
                             fillColor: Colors.white,
@@ -739,7 +596,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             labelText: 'Pincode',
-                            hintText: '560038',
+                            hintText: '6-digit Pincode',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                             filled: true,
                             fillColor: Colors.white,
@@ -922,18 +779,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                         'SIGN IN TO ${widget.portalRole.toUpperCase()} PORTAL',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: themeColor),
                       ),
-                      const Spacer(),
-                      TextButton.icon(
-                        style: TextButton.styleFrom(
-                          foregroundColor: themeColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        icon: const Icon(Icons.flash_on_rounded, size: 14),
-                        label: const Text('Fill Demo ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        onPressed: _fillPreseededLoginCredentials,
-                      ),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -942,7 +787,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                     controller: _loginIdController,
                     decoration: InputDecoration(
                       labelText: '${widget.portalRole.capitalize()} User ID or Registered Mobile',
-                      hintText: widget.portalRole == 'customer' ? 'e.g. CUST1001 or 9876543210' : 'e.g. User ID or Mobile',
+                      hintText: 'Enter User ID or 10-digit Mobile',
                       prefixIcon: const Icon(Icons.badge_outlined),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
@@ -1147,85 +992,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                   ),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // 1-Click Fast Demo Login Pill strictly for THIS portal
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  '1-CLICK DEMO ACCESS FOR ${widget.portalRole.toUpperCase()}:',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 0.5),
-                ),
-                const SizedBox(height: 8),
-                if (widget.portalRole == 'merchant') ...[
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFD97706),
-                      side: const BorderSide(color: Color(0xFFD97706), width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    icon: const Icon(Icons.storefront_rounded, size: 16),
-                    label: const Text(
-                      '⚡ Demo Store 1: Navjeevan Supermart (MERC2001)',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
-                    ),
-                    onPressed: _isLoggingIn ? null : () => _handleQuickDemoLogin(storeId: 1),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF1D4ED8),
-                      side: const BorderSide(color: Color(0xFF1D4ED8), width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    icon: const Icon(Icons.storefront_rounded, size: 16),
-                    label: const Text(
-                      '⚡ Demo Store 2: More Provision (MERC2002)',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
-                    ),
-                    onPressed: _isLoggingIn ? null : () => _handleQuickDemoLogin(storeId: 2),
-                  ),
-                ] else ...[
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: themeColor,
-                      side: BorderSide(color: themeColor, width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                    ),
-                    icon: Icon(
-                      widget.portalRole == 'customer'
-                          ? Icons.shopping_basket_rounded
-                          : widget.portalRole == 'delivery'
-                              ? Icons.delivery_dining_rounded
-                              : Icons.admin_panel_settings_rounded,
-                      size: 16,
-                    ),
-                    label: Text(
-                      widget.portalRole == 'customer'
-                          ? '⚡ Instant Demo Customer (Pooja Sharma)'
-                          : widget.portalRole == 'delivery'
-                              ? '⚡ Instant Demo Delivery Rider (Vikram Singh)'
-                              : '⚡ Instant Demo Admin (Platform Operations)',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11),
-                    ),
-                    onPressed: _isLoggingIn ? null : _handleQuickDemoLogin,
-                  ),
-                ],
-              ],
             ),
           ),
           const SizedBox(height: 14),
