@@ -261,6 +261,10 @@ const CustomerModule = {
 
         // Render available items breakdown
         const itemsBreakdown = document.getElementById('avail-items-breakdown');
+        const deliveryFee = avail.delivery_fee !== undefined ? avail.delivery_fee : (avail.total_bill >= 200 ? 0.0 : 30.0);
+        const isFree = deliveryFee === 0;
+        const subtotal = avail.items_subtotal !== undefined ? avail.items_subtotal : (avail.total_bill - deliveryFee);
+
         itemsBreakdown.innerHTML = avail.available_items.map(it => `
             <div class="flex justify-between items-center py-1.5 border-b border-slate-100 text-xs">
                 <div>
@@ -269,7 +273,18 @@ const CustomerModule = {
                 </div>
                 <div class="font-bold text-slate-800">₹${it.subtotal}</div>
             </div>
-        `).join('');
+        `).join('') + `
+            <div class="flex justify-between items-center py-1.5 border-t border-slate-200 text-xs font-medium text-slate-600 mt-1">
+                <span>Items Subtotal</span>
+                <span>₹${subtotal.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between items-center py-1 text-xs">
+                <span class="text-slate-600">Delivery Fee</span>
+                <span class="${isFree ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}">
+                    ${isFree ? '🎉 FREE (Orders above ₹200)' : '+₹' + deliveryFee.toFixed(2)}
+                </span>
+            </div>
+        `;
     },
 
     // Switch Store helper (e.g. from missing items prompt)

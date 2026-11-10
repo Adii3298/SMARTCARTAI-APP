@@ -41,6 +41,7 @@ class OrderModel {
   final String orderNumber;
   final String status;
   final double totalAmount;
+  final double deliveryFee;
   final String paymentMode;
   final String paymentStatus;
   final String deliveryCode; // 6-digit delivery verification OTP
@@ -61,11 +62,15 @@ class OrderModel {
   final String? deliveryPartnerVehicle;
   final List<OrderItemModel> items;
 
+  bool get isFreeDelivery => deliveryFee == 0.0;
+  double get itemsSubtotal => (totalAmount - deliveryFee).clamp(0.0, double.infinity);
+
   OrderModel({
     required this.id,
     required this.orderNumber,
     required this.status,
     required this.totalAmount,
+    this.deliveryFee = 0.0,
     required this.paymentMode,
     required this.paymentStatus,
     required this.deliveryCode,
@@ -97,11 +102,17 @@ class OrderModel {
     String? qr = json['upi_qr_code'];
     String? codText = json['cod_instructions'];
 
+    double parsedTotal = (json['total_amount'] is num) ? (json['total_amount'] as num).toDouble() : 0.0;
+    double parsedFee = (json['delivery_fee'] is num)
+        ? (json['delivery_fee'] as num).toDouble()
+        : (parsedTotal >= 200.0 ? 0.0 : (parsedTotal > 0.0 ? 30.0 : 0.0));
+
     return OrderModel(
       id: json['id'] ?? 0,
       orderNumber: json['order_number'] ?? '',
       status: json['status'] ?? 'PENDING_MERCHANT',
-      totalAmount: (json['total_amount'] is num) ? (json['total_amount'] as num).toDouble() : 0.0,
+      totalAmount: parsedTotal,
+      deliveryFee: parsedFee,
       paymentMode: json['payment_mode'] ?? 'COD',
       paymentStatus: json['payment_status'] ?? 'PENDING',
       deliveryCode: json['delivery_code'] ?? '',

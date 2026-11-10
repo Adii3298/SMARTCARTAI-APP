@@ -1476,6 +1476,37 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               ],
                             ),
                           )),
+                          const Divider(height: 14, color: Color(0xFFFDE68A)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Items Subtotal:', style: TextStyle(fontSize: 11, color: Color(0xFF78350F))),
+                              Text('₹${order.itemsSubtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF78350F))),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Delivery Fee:', style: TextStyle(fontSize: 11, color: Color(0xFF78350F))),
+                              Text(
+                                order.isFreeDelivery ? 'FREE (Above ₹200)' : '₹${order.deliveryFee.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: order.isFreeDelivery ? const Color(0xFF047857) : const Color(0xFFB45309),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 12, color: Color(0xFFFDE68A)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Total Bill:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF451A03))),
+                              Text('₹${order.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF451A03))),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -2265,9 +2296,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             Row(
                               children: [
                                 Text('⚡ ${deliveryMins}m delivery', style: const TextStyle(fontSize: 10, color: Colors.blueGrey)),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: (bill >= 200.0) ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    (bill >= 200.0) ? 'FREE Delv' : '+₹30 Delv',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: (bill >= 200.0) ? const Color(0xFF047857) : const Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Bill: ₹$bill',
+                                  '₹$bill',
                                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
                                 ),
                               ],
@@ -2301,7 +2348,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   Widget _buildCheckoutSummaryCard() {
     final storeName = _selectedStore?.name ?? 'Selected Kirana Store';
-    final totalBill = _availabilityData?['total_bill'] ?? 0.0;
+    final totalBill = (_availabilityData?['total_bill'] is num) ? (_availabilityData!['total_bill'] as num).toDouble() : 0.0;
+    final itemsSubtotal = (_availabilityData?['items_subtotal'] is num) ? (_availabilityData!['items_subtotal'] as num).toDouble() : totalBill;
+    final deliveryFee = (_availabilityData?['delivery_fee'] is num) ? (_availabilityData!['delivery_fee'] as num).toDouble() : (itemsSubtotal >= 200.0 ? 0.0 : 30.0);
+    final isFreeDelivery = (_availabilityData?['is_free_delivery'] as bool?) ?? (deliveryFee == 0.0);
+    final neededForFree = (_availabilityData?['amount_needed_for_free_delivery'] is num)
+        ? (_availabilityData!['amount_needed_for_free_delivery'] as num).toDouble()
+        : (isFreeDelivery ? 0.0 : (200.0 - itemsSubtotal).clamp(0.0, 200.0));
     final availableCount = _availabilityData?['available_count'] ?? _ocrResult?.items.length ?? 0;
     final totalItems = _availabilityData?['total_items_requested'] ?? _ocrResult?.items.length ?? 0;
     final missingCount = _availabilityData?['missing_count'] ?? 0;
@@ -2328,7 +2381,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   ),
                 ),
                 Text(
-                  '₹$totalBill',
+                  '₹${totalBill.toStringAsFixed(2)}',
                   style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF059669)),
                 ),
               ],
@@ -2345,6 +2398,84 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 children: [
                   Text('$availableCount of $totalItems items in stock', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
                   const Text('Estimated Delivery: 15-20 mins', style: TextStyle(fontSize: 10, color: Colors.blueGrey)),
+                ],
+              ),
+            ),
+
+            // 🚚 Delivery Fee Policy Banner (Free above ₹200, ₹30 below ₹200)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: isFreeDelivery ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: isFreeDelivery ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isFreeDelivery ? Icons.local_shipping_rounded : Icons.info_outline_rounded,
+                    size: 15,
+                    color: isFreeDelivery ? const Color(0xFF047857) : const Color(0xFFB45309),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isFreeDelivery
+                          ? '🎉 FREE Delivery applied! (Orders above ₹200)'
+                          : '🚚 Delivery Fee: ₹30. Add ₹${neededForFree.toStringAsFixed(0)} more for FREE Delivery!',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isFreeDelivery ? const Color(0xFF047857) : const Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Detailed Itemized Price Breakdown
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Items Subtotal:', style: TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                      Text('₹${itemsSubtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Delivery Fee:', style: TextStyle(fontSize: 11, color: Colors.blueGrey)),
+                      Text(
+                        isFreeDelivery ? 'FREE' : '₹${deliveryFee.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isFreeDelivery ? const Color(0xFF059669) : const Color(0xFFD97706),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Total Amount:', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                      Text('₹${totalBill.toStringAsFixed(2)}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF059669))),
+                    ],
+                  ),
                 ],
               ),
             ),

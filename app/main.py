@@ -45,6 +45,16 @@ from .seed_data import seed_database
 
 # Initialize database tables and seed data
 Base.metadata.create_all(bind=engine)
+
+# Auto-migration check: ensure delivery_fee column exists in orders table
+try:
+    with engine.connect() as conn:
+        from sqlalchemy import text
+        conn.execute(text("ALTER TABLE orders ADD COLUMN delivery_fee FLOAT DEFAULT 0.0"))
+        conn.commit()
+except Exception:
+    pass
+
 db_session = SessionLocal()
 try:
     seed_database(db_session)
@@ -699,6 +709,19 @@ def match_item_to_inventory(store: Store, req_name: str) -> Optional[ProductInve
     return best_sim_item
 
 
+# ==============================================================================
+# DELIVERY PRICING POLICY: Free Delivery above ₹200. Standard ₹30 below ₹200.
+# ==============================================================================
+FREE_DELIVERY_THRESHOLD = 200.0
+STANDARD_DELIVERY_FEE = 30.0
+
+def calculate_delivery_fee(items_subtotal: float) -> float:
+    """Returns 0.0 (FREE Delivery) if items subtotal is >= 200.0, else 30.0."""
+    if items_subtotal <= 0:
+        return 0.0
+    return 0.0 if items_subtotal >= FREE_DELIVERY_THRESHOLD else STANDARD_DELIVERY_FEE
+
+
 def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str, Any]:
     """Helper that checks item availability and total bill for a single store."""
     available_items = []
@@ -741,6 +764,13 @@ def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str,
 
     avail_pct = round((len(available_items) / max(len(items), 1)) * 100, 1)
 
+    # 🚚 Delivery Pricing: Free above ₹200, ₹30 below ₹200
+    items_subtotal = round(total_bill, 2)
+    delivery_fee = calculate_delivery_fee(items_subtotal)
+    is_free = items_subtotal >= FREE_DELIVERY_THRESHOLD
+    needed_for_free = max(0.0, round(FREE_DELIVERY_THRESHOLD - items_subtotal, 2)) if not is_free else 0.0
+    grand_total = round(items_subtotal + delivery_fee, 2)
+
     return {
         "status": "success",
         "store": {
@@ -762,7 +792,12 @@ def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str,
         "availability_percentage": avail_pct,
         "available_items": available_items,
         "missing_items": missing_items,
-        "total_bill": round(total_bill, 2)
+        "items_subtotal": items_subtotal,
+        "delivery_fee": delivery_fee,
+        "is_free_delivery": is_free,
+        "free_delivery_threshold": FREE_DELIVERY_THRESHOLD,
+        "amount_needed_for_free_delivery": needed_for_free,
+        "total_bill": grand_total
     }
 
 
@@ -925,7 +960,10 @@ def create_customer_order(data: CreateOrderRequest, customer_id: int, db: Sessio
         )
         db.add(order_item)
 
-    new_order.total_amount = round(calc_total, 2)
+    items_total = round(calc_total, 2)
+    delivery_fee = calculate_delivery_fee(items_total)
+    new_order.delivery_fee = delivery_fee
+    new_order.total_amount = round(items_total + delivery_fee, 2)
     db.commit()
 
     record_activity(db, customer.id, "customer", "ORDER_CREATED", f"Order {new_order.order_number} sent to store '{store.name}'")
@@ -938,6 +976,9 @@ def create_customer_order(data: CreateOrderRequest, customer_id: int, db: Sessio
             "order_number": new_order.order_number,
             "status": new_order.status,
             "store_name": store.name,
+            "items_subtotal": items_total,
+            "delivery_fee": delivery_fee,
+            "is_free_delivery": items_total >= FREE_DELIVERY_THRESHOLD,
             "total_amount": new_order.total_amount,
             "items_count": len(data.items)
         }
@@ -984,7 +1025,10 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
                 it.packed_quantity = it.requested_quantity if it.requested_quantity > 0 else 1.0
                 it.subtotal = round(it.packed_quantity * it.unit_price, 2)
                 calc_total += it.subtotal
-            order.total_amount = round(calc_total, 2)
+            items_subtotal = round(calc_total, 2)
+            d_fee = calculate_delivery_fee(items_subtotal)
+            order.delivery_fee = d_fee
+            order.total_amount = round(items_subtotal + d_fee, 2)
             order.status = "PACKING_CONFIRMED"
             order.confirmed_at = utcnow()
             db.commit()
@@ -1007,6 +1051,9 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
 
     upi_details = generate_upi_payment_details(store, order)
 
+    curr_delivery_fee = order.delivery_fee if (hasattr(order, "delivery_fee") and order.delivery_fee is not None) else calculate_delivery_fee(order.total_amount)
+    items_subtotal = round(order.total_amount - curr_delivery_fee, 2)
+
     return {
         "status": "success",
         "has_active_order": True,
@@ -1015,6 +1062,10 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
             "order_number": order.order_number,
             "status": order.status,
             "total_amount": order.total_amount,
+            "items_subtotal": items_subtotal,
+            "delivery_fee": curr_delivery_fee,
+            "is_free_delivery": curr_delivery_fee == 0.0,
+            "free_delivery_threshold": FREE_DELIVERY_THRESHOLD,
             "payment_mode": order.payment_mode,
             "payment_status": order.payment_status,
             "delivery_code": order.delivery_code,
@@ -1200,7 +1251,9 @@ def merchant_pack_and_confirm(data: MerchantConfirmRequest, merchant_id: int, db
             db_item.subtotal = round(pack_item.packed_quantity * pack_item.unit_price, 2) if pack_item.is_available else 0.0
             calc_total += db_item.subtotal
 
-    order.total_amount = round(calc_total, 2) if calc_total > 0 else round(data.total_amount, 2)
+    items_subtotal = round(calc_total, 2) if calc_total > 0 else round(data.total_amount, 2)
+    order.delivery_fee = calculate_delivery_fee(items_subtotal)
+    order.total_amount = round(items_subtotal + order.delivery_fee, 2)
     order.status = "PACKING_CONFIRMED"
     order.confirmed_at = utcnow()
     if data.notes:
@@ -1215,6 +1268,9 @@ def merchant_pack_and_confirm(data: MerchantConfirmRequest, merchant_id: int, db
         "order_status": order.status,
         "message": f"Order {order.order_number} packed and confirmation request sent to customer!",
         "order_id": order.id,
+        "items_subtotal": items_subtotal,
+        "delivery_fee": order.delivery_fee,
+        "is_free_delivery": order.delivery_fee == 0.0,
         "total_amount": order.total_amount
     }
 
@@ -1237,7 +1293,9 @@ def merchant_quick_confirm_order(order_id: int, db: Session = Depends(get_db)):
         it.subtotal = round(it.packed_quantity * it.unit_price, 2)
         calc_total += it.subtotal
 
-    order.total_amount = round(calc_total, 2)
+    items_subtotal = round(calc_total, 2)
+    order.delivery_fee = calculate_delivery_fee(items_subtotal)
+    order.total_amount = round(items_subtotal + order.delivery_fee, 2)
     order.status = "PACKING_CONFIRMED"
     order.confirmed_at = utcnow()
     db.commit()
@@ -1251,6 +1309,9 @@ def merchant_quick_confirm_order(order_id: int, db: Session = Depends(get_db)):
         "order_status": order.status,
         "message": f"Order {order.order_number} quick-confirmed! Bill: ₹{order.total_amount:.2f}",
         "order_id": order.id,
+        "items_subtotal": items_subtotal,
+        "delivery_fee": order.delivery_fee,
+        "is_free_delivery": order.delivery_fee == 0.0,
         "total_amount": order.total_amount
     }
 

@@ -115,6 +115,7 @@ class Order(Base):
     status = Column(String(30), default="PENDING_MERCHANT", index=True)
     
     total_amount = Column(Float, default=0.0)
+    delivery_fee = Column(Float, default=0.0)  # Free (0.0) if items total >= 200, else 30.0
     payment_mode = Column(String(20), default="COD")  # COD, UPI
     payment_status = Column(String(20), default="PENDING")  # PENDING, COMPLETED
     delivery_code = Column(String(10), nullable=False)  # 6-digit delivery verification OTP
