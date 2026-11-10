@@ -21,7 +21,6 @@ smart_cart_mobile/.pub/
 # Big binaries (APKs)
 *.apk
 app/static/SmartCart-Release.apk
-app/static/web/
 
 # Test artifacts
 crop_sugar.jpg

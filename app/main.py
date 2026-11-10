@@ -1872,10 +1872,13 @@ def get_admin_orders(db: Session = Depends(get_db)):
 # 9. FLUTTER MOBILE APPLICATION SERVING
 # ==============================================================================
 
-FLUTTER_WEB_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "smart_cart_mobile", "build", "web"))
+FLUTTER_BUILD_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "smart_cart_mobile", "build", "web"))
+STATIC_WEB_DIR = os.path.abspath(os.path.join(STATIC_DIR, "web"))
 
-if os.path.exists(FLUTTER_WEB_DIR):
-    app.mount("/", StaticFiles(directory=FLUTTER_WEB_DIR, html=True), name="flutter_web")
+if os.path.exists(STATIC_WEB_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_WEB_DIR, html=True), name="flutter_web")
+elif os.path.exists(FLUTTER_BUILD_DIR):
+    app.mount("/", StaticFiles(directory=FLUTTER_BUILD_DIR, html=True), name="flutter_web")
 else:
     @app.get("/", response_class=HTMLResponse)
     def serve_home(request: Request):
