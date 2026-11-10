@@ -1300,7 +1300,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         const SizedBox(width: 10),
                         const Expanded(
                           child: Text(
-                            'Store is verifying item availability & preparing confirmed bill...',
+                            'Store is verifying item availability (Auto-packing bill in ~3s)...',
                             style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), fontWeight: FontWeight.bold),
                           ),
                         ),

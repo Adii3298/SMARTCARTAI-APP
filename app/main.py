@@ -972,6 +972,39 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
     delivery_user = db.query(User).filter(User.id == order.delivery_partner_id).first() if order.delivery_partner_id else None
 
     items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+
+    # ⚡ SMART HYPERLOCAL SIMULATOR: Prevents endless waiting during testing & demo
+    # 1. If order is waiting in PENDING_MERCHANT for >= 3 seconds, auto-verify in-stock items & calculate bill
+    if order.status == "PENDING_MERCHANT" and order.created_at:
+        seconds_waiting = (utcnow() - order.created_at).total_seconds()
+        if seconds_waiting >= 3.0:
+            calc_total = 0.0
+            for it in items:
+                it.is_available = True
+                it.packed_quantity = it.requested_quantity if it.requested_quantity > 0 else 1.0
+                it.subtotal = round(it.packed_quantity * it.unit_price, 2)
+                calc_total += it.subtotal
+            order.total_amount = round(calc_total, 2)
+            order.status = "PACKING_CONFIRMED"
+            order.confirmed_at = utcnow()
+            db.commit()
+            db.refresh(order)
+            record_activity(db, customer_id, "system", "AUTO_STORE_VERIFIED", f"Store auto-verified order {order.order_number} (Bill: ₹{order.total_amount})")
+
+    # 2. If order is waiting in LOOKING_FOR_DELIVERY for >= 3 seconds, auto-assign nearest active delivery partner
+    if order.status == "LOOKING_FOR_DELIVERY":
+        dispatch_base = order.confirmed_at or order.created_at
+        if dispatch_base and (utcnow() - dispatch_base).total_seconds() >= 3.0:
+            first_rider = db.query(User).filter(User.role == "delivery", User.is_online == True).first()
+            if first_rider:
+                order.delivery_partner_id = first_rider.id
+                order.status = "OUT_FOR_DELIVERY"
+                order.dispatched_at = utcnow()
+                db.commit()
+                db.refresh(order)
+                delivery_user = first_rider
+                record_activity(db, first_rider.id, "delivery", "AUTO_RIDER_ASSIGNED", f"Rider {first_rider.name} auto-assigned for order {order.order_number}")
+
     upi_details = generate_upi_payment_details(store, order)
 
     return {
