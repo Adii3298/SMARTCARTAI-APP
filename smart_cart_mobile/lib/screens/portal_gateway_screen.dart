@@ -173,34 +173,27 @@ class PortalGatewayScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // ⚡ 1-Click Instant Experience Hero Box
+              // Direct Portal Access
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF064E3B), Color(0xFF0F291E)],
+                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.5), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF059669).withOpacity(0.2),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: const Color(0xFF334155)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.bolt_rounded, color: Color(0xFF34D399), size: 22),
-                        SizedBox(width: 6),
+                        Icon(Icons.shield_outlined, color: Color(0xFF34D399), size: 20),
+                        SizedBox(width: 8),
                         Text(
-                          '⚡ 1-CLICK INSTANT ENTRY (DEMO)',
+                          'DIRECT PORTAL SELECTION',
                           style: TextStyle(
                             color: Color(0xFF34D399),
                             fontSize: 12,
@@ -212,8 +205,8 @@ class PortalGatewayScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Tap any portal below to instantly enter that app with pre-seeded data in 1 click (no login or typing required):',
-                      style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1), height: 1.4),
+                      'Select your designated portal below to open its dedicated Sign In & authentication screen:',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), height: 1.4),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -272,9 +265,8 @@ class PortalGatewayScreen extends StatelessWidget {
                 gradient: const [Color(0xFF065F46), Color(0xFF047857)],
                 icon: Icons.shopping_basket_rounded,
                 description: 'Scan handwritten grocery lists with AI OCR, order from Navjeevan & More Provision, pay with UPI or Cash on Delivery (COD) & track deliveries.',
-                actionText: '1-Click Launch Customer App',
+                actionText: 'Sign In / Register',
                 onTap: () => onSelectPortal('customer'),
-                onInstantTap: () => onInstantLaunch?.call('customer'),
                 isPrimary: true,
               ),
               const SizedBox(height: 14),
@@ -286,47 +278,9 @@ class PortalGatewayScreen extends StatelessWidget {
                 badgeColor: const Color(0xFFD97706),
                 gradient: const [Color(0xFF78350F), Color(0xFF92400E)],
                 icon: Icons.storefront_rounded,
-                description: 'Manage grocery orders, confirm packed quantities, update item prices, and track live inventory for both local stores:',
-                actionText: '1-Click Launch Merchant Portal',
+                description: 'Manage grocery orders, confirm packed quantities, update item prices, and track live inventory for both local stores (Navjeevan Supermart & More Provision).',
+                actionText: 'Sign In / Register',
                 onTap: () => onSelectPortal('merchant'),
-                onInstantTap: () => onInstantLaunch?.call('merchant_navjeevan'),
-                customActions: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFD97706),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 2,
-                            ),
-                            icon: const Icon(Icons.storefront_rounded, size: 15),
-                            label: const Text('Navjeevan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
-                            onPressed: () => onInstantLaunch?.call('merchant_navjeevan'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1D4ED8),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              elevation: 2,
-                            ),
-                            icon: const Icon(Icons.storefront_rounded, size: 15),
-                            label: const Text('More Provision', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
-                            onPressed: () => onInstantLaunch?.call('merchant_more'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
               const SizedBox(height: 14),
 
@@ -338,9 +292,8 @@ class PortalGatewayScreen extends StatelessWidget {
                 gradient: const [Color(0xFF1E3A8A), Color(0xFF1D4ED8)],
                 icon: Icons.delivery_dining_rounded,
                 description: 'For delivery partners to accept store-to-door gigs from Navjeevan & More Provision, navigate delivery routes, and verify drop-offs.',
-                actionText: '1-Click Launch Delivery Portal',
+                actionText: 'Sign In / Register',
                 onTap: () => onSelectPortal('delivery'),
-                onInstantTap: () => onInstantLaunch?.call('delivery'),
               ),
               const SizedBox(height: 14),
 
@@ -352,9 +305,8 @@ class PortalGatewayScreen extends StatelessWidget {
                 gradient: const [Color(0xFF4C1D95), Color(0xFF5B21B6)],
                 icon: Icons.admin_panel_settings_rounded,
                 description: 'For system administrators to oversee Navjeevan, More Provision, riders, customers, and supervise isolated portals.',
-                actionText: '1-Click Launch Admin Portal',
+                actionText: 'Admin Sign In',
                 onTap: () => onSelectPortal('admin'),
-                onInstantTap: () => onInstantLaunch?.call('admin'),
               ),
               const SizedBox(height: 20),
 
@@ -448,7 +400,7 @@ class PortalGatewayScreen extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
         overflow: TextOverflow.ellipsis,
       ),
-      onPressed: () => onInstantLaunch?.call(role) ?? onSelectPortal(role),
+      onPressed: () => onSelectPortal(role),
     );
   }
 
@@ -461,8 +413,6 @@ class PortalGatewayScreen extends StatelessWidget {
     required String description,
     required String actionText,
     required VoidCallback onTap,
-    VoidCallback? onInstantTap,
-    Widget? customActions,
     bool isPrimary = false,
   }) {
     return Container(
@@ -487,7 +437,7 @@ class PortalGatewayScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: onInstantTap ?? onTap,
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
@@ -549,56 +499,38 @@ class PortalGatewayScreen extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                if (customActions != null) ...[
-                  const SizedBox(height: 14),
-                  customActions,
-                  const SizedBox(height: 6),
-                  Center(
-                    child: TextButton(
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        foregroundColor: const Color(0xFF64748B),
-                        visualDensity: VisualDensity.compact,
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Text(
+                      'Dedicated Portal Login',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey.shade400,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: badgeColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.login_rounded, size: 16),
+                      label: Text(
+                        actionText,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       onPressed: onTap,
-                      child: const Text('Custom Sign In / Register', style: TextStyle(fontSize: 11)),
                     ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 14),
-                  Row(
-                    children: [
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          foregroundColor: const Color(0xFF64748B),
-                          visualDensity: VisualDensity.compact,
-                        ),
-                        onPressed: onTap,
-                        child: const Text('Custom Sign In / Register', style: TextStyle(fontSize: 11)),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: badgeColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          elevation: 0,
-                        ),
-                        icon: const Icon(Icons.bolt_rounded, size: 16),
-                        label: Text(
-                          actionText,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        onPressed: onInstantTap ?? onTap,
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ],
             ),
           ),

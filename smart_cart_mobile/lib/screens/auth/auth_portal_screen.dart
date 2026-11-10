@@ -8,7 +8,7 @@ class AuthPortalScreen extends StatefulWidget {
   final String portalRole; // 'customer', 'merchant', 'delivery', 'admin'
   final VoidCallback onAuthSuccess;
   final VoidCallback? onBackToGateway;
-  final int initialTabIndex; // 0 = Register, 1 = Login
+  final int initialTabIndex; // 0 = Sign In, 1 = Register
 
   const AuthPortalScreen({
     Key? key,
@@ -56,12 +56,13 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    // Admin only has Login tab (1 tab); others have Register & Login (2 tabs)
+    // Admin only has Login tab (1 tab); others have Sign In & Register (2 tabs)
     final tabCount = widget.portalRole == 'admin' ? 1 : 2;
     final initialIdx = widget.portalRole == 'admin' ? 0 : widget.initialTabIndex;
     _tabController = TabController(length: tabCount, vsync: this, initialIndex: initialIdx);
     _loadCaptcha();
     _fillDefaultDemoFields();
+    _fillPreseededLoginCredentials();
   }
 
   void _fillDefaultDemoFields() {
@@ -361,7 +362,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
               Navigator.pop(ctx);
               _loginIdController.text = credentials['user_id'];
               _passwordController.text = credentials['default_password'];
-              _tabController.animateTo(widget.portalRole == 'admin' ? 0 : 1);
+              _tabController.animateTo(0);
               _loadCaptcha();
             },
             child: const Text('Proceed to Sign In with CAPTCHA ➔', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -574,23 +575,23 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                         dividerColor: Colors.transparent,
                         tabs: [
-                          Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.person_add_alt_1_rounded, size: 15),
-                                const SizedBox(width: 6),
-                                Text('1. Register ${widget.portalRole == "customer" ? "Shopper" : widget.portalRole.capitalize()}'),
-                              ],
-                            ),
-                          ),
                           const Tab(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.lock_rounded, size: 15),
                                 SizedBox(width: 6),
-                                Text('2. Sign In (CAPTCHA)'),
+                                Text('1. Sign In (CAPTCHA)'),
+                              ],
+                            ),
+                          ),
+                          Tab(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.person_add_alt_1_rounded, size: 15),
+                                const SizedBox(width: 6),
+                                Text('2. Register ${widget.portalRole == "customer" ? "Shopper" : widget.portalRole.capitalize()}'),
                               ],
                             ),
                           ),
@@ -608,8 +609,8 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                   : TabBarView(
                       controller: _tabController,
                       children: [
-                        _buildRegistrationTab(themeColor),
                         _buildLoginTab(themeColor),
+                        _buildRegistrationTab(themeColor),
                       ],
                     ),
             ),
@@ -882,7 +883,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
 
           Center(
             child: TextButton(
-              onPressed: () => _tabController.animateTo(1),
+              onPressed: () => _tabController.animateTo(0),
               child: Text(
                 'Already have User ID & Password? Sign In with CAPTCHA →',
                 style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 12),
@@ -1251,6 +1252,18 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
               ],
             ),
           ),
+          if (widget.portalRole != 'admin') ...[
+            const SizedBox(height: 14),
+            Center(
+              child: TextButton(
+                onPressed: () => _tabController.animateTo(1),
+                child: Text(
+                  'Don\'t have an account? Register ${widget.portalRole == "customer" ? "New Shopper" : widget.portalRole.capitalize()} →',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 12),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
