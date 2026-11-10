@@ -722,6 +722,36 @@ def calculate_delivery_fee(items_subtotal: float) -> float:
     return 0.0 if items_subtotal >= FREE_DELIVERY_THRESHOLD else STANDARD_DELIVERY_FEE
 
 
+def normalize_item_quantity_and_unit(requested_qty: float, requested_unit: str, inv_unit: str) -> Tuple[float, str]:
+    """
+    Normalizes requested quantity and unit against store inventory unit.
+    Prevents package weights (e.g. 250g tea, 500g poha) from multiplying as 250 packets!
+    """
+    req_u = (requested_unit or "").lower().strip()
+    inv_u = (inv_unit or "").lower().strip()
+    qty = float(requested_qty) if (requested_qty is not None and requested_qty > 0) else 1.0
+
+    # If inventory unit is packet/bottle/piece/box/unit:
+    if inv_u in ["packet", "bottle", "piece", "box", "can", "unit"]:
+        if req_u in ["g", "gm", "grams", "gram", "ml"] or qty >= 50:
+            return 1.0, inv_u
+        return qty, inv_u
+
+    # If inventory unit is kg and requested is in grams:
+    if inv_u == "kg":
+        if req_u in ["g", "gm", "grams", "gram"] or qty >= 50:
+            return round(qty / 1000.0, 3), "kg"
+        return qty, "kg"
+
+    # If inventory unit is l (litre) and requested is in ml:
+    if inv_u == "l":
+        if req_u in ["ml", "milliliters", "milliliter"] or qty >= 100:
+            return round(qty / 1000.0, 3), "l"
+        return qty, "l"
+
+    return qty, inv_u if inv_u else req_u
+
+
 def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str, Any]:
     """Helper that checks item availability and total bill for a single store."""
     available_items = []
@@ -733,14 +763,15 @@ def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str,
 
         # Check stock status
         if matched_inv and matched_inv.is_in_stock and matched_inv.stock_quantity > 0:
-            subtotal = round(matched_inv.price * requested.quantity, 2)
+            norm_qty, norm_unit = normalize_item_quantity_and_unit(requested.quantity, requested.unit, matched_inv.unit)
+            subtotal = round(matched_inv.price * norm_qty, 2)
             total_bill += subtotal
             available_items.append({
                 "product_name": matched_inv.name,
                 "brand": matched_inv.brand,
                 "category": matched_inv.category,
-                "requested_quantity": requested.quantity,
-                "unit": matched_inv.unit,
+                "requested_quantity": norm_qty,
+                "unit": norm_unit,
                 "unit_price": matched_inv.price,
                 "subtotal": subtotal,
                 "is_available": True
@@ -944,16 +975,17 @@ def create_customer_order(data: CreateOrderRequest, customer_id: int, db: Sessio
 
         price = inv.price if inv else 50.0
         is_avail = (inv.is_in_stock and inv.stock_quantity > 0) if inv else True
-        subtot = round(price * item.quantity, 2) if is_avail else 0.0
+        norm_qty, norm_unit = normalize_item_quantity_and_unit(item.quantity, item.unit, inv.unit if inv else item.unit)
+        subtot = round(price * norm_qty, 2) if is_avail else 0.0
         calc_total += subtot
 
         order_item = OrderItem(
             order_id=new_order.id,
             product_name=inv.name if inv else item.name,
             brand=inv.brand if inv else (item.brand or "Standard"),
-            requested_quantity=item.quantity,
-            requested_unit=inv.unit if inv else item.unit,
-            packed_quantity=item.quantity,
+            requested_quantity=norm_qty,
+            requested_unit=norm_unit,
+            packed_quantity=norm_qty,
             unit_price=price,
             subtotal=subtot,
             is_available=is_avail
@@ -1014,40 +1046,9 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
 
     items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
 
-    # ⚡ SMART HYPERLOCAL SIMULATOR: Prevents endless waiting during testing & demo
-    # 1. If order is waiting in PENDING_MERCHANT for >= 3 seconds, auto-verify in-stock items & calculate bill
-    if order.status == "PENDING_MERCHANT" and order.created_at:
-        seconds_waiting = (utcnow() - order.created_at).total_seconds()
-        if seconds_waiting >= 3.0:
-            calc_total = 0.0
-            for it in items:
-                it.is_available = True
-                it.packed_quantity = it.requested_quantity if it.requested_quantity > 0 else 1.0
-                it.subtotal = round(it.packed_quantity * it.unit_price, 2)
-                calc_total += it.subtotal
-            items_subtotal = round(calc_total, 2)
-            d_fee = calculate_delivery_fee(items_subtotal)
-            order.delivery_fee = d_fee
-            order.total_amount = round(items_subtotal + d_fee, 2)
-            order.status = "PACKING_CONFIRMED"
-            order.confirmed_at = utcnow()
-            db.commit()
-            db.refresh(order)
-            record_activity(db, customer_id, "system", "AUTO_STORE_VERIFIED", f"Store auto-verified order {order.order_number} (Bill: ₹{order.total_amount})")
-
-    # 2. If order is waiting in LOOKING_FOR_DELIVERY for >= 3 seconds, auto-assign nearest active delivery partner
-    if order.status == "LOOKING_FOR_DELIVERY":
-        dispatch_base = order.confirmed_at or order.created_at
-        if dispatch_base and (utcnow() - dispatch_base).total_seconds() >= 3.0:
-            first_rider = db.query(User).filter(User.role == "delivery", User.is_online == True).first()
-            if first_rider:
-                order.delivery_partner_id = first_rider.id
-                order.status = "OUT_FOR_DELIVERY"
-                order.dispatched_at = utcnow()
-                db.commit()
-                db.refresh(order)
-                delivery_user = first_rider
-                record_activity(db, first_rider.id, "delivery", "AUTO_RIDER_ASSIGNED", f"Rider {first_rider.name} auto-assigned for order {order.order_number}")
+    # Natural multi-role flow preserved:
+    # 1. Stays in PENDING_MERCHANT so the Merchant actually sees the order and clicks "Confirm Order & Pack Bill"
+    # 2. Stays in LOOKING_FOR_DELIVERY so the Delivery Rider actually sees the gig and clicks "Accept Delivery Gig"
 
     upi_details = generate_upi_payment_details(store, order)
 
