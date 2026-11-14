@@ -59,6 +59,14 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
     final tabCount = widget.portalRole == 'admin' ? 1 : 2;
     final initialIdx = widget.portalRole == 'admin' ? 0 : widget.initialTabIndex;
     _tabController = TabController(length: tabCount, vsync: this, initialIndex: initialIdx);
+    
+    // Instant zero-delay local security CAPTCHA on frame 0 (never shows a spinner)
+    final instant = ApiService.generateLocalCaptcha();
+    _captchaId = instant['captcha_id'];
+    _offlineCaptchaText = instant['offline_text'];
+    _isLoadingCaptcha = false;
+
+    // Concurrently fetch high-contrast visual backend CAPTCHA
     _loadCaptcha();
   }
 
@@ -80,24 +88,37 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
     super.dispose();
   }
 
-  Future<void> _loadCaptcha() async {
-    setState(() => _isLoadingCaptcha = true);
-    try {
-      final res = await ApiService().fetchCaptcha();
+  Future<void> _loadCaptcha({bool manualRefresh = false}) async {
+    if (manualRefresh) {
+      // If user tapped refresh, immediately show fresh local captcha so there is 0 latency
+      final fresh = ApiService.generateLocalCaptcha();
       setState(() {
-        _captchaId = res['captcha_id'];
-        _captchaBase64 = res['image_base64'];
-        _offlineCaptchaText = res['offline_text'];
+        _captchaId = fresh['captcha_id'];
+        _offlineCaptchaText = fresh['offline_text'];
+        _captchaBase64 = null;
         _captchaController.clear();
       });
-    } catch (e) {
+    }
+    
+    try {
+      final res = await ApiService().fetchCaptcha();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not load CAPTCHA: $e')),
-        );
+        setState(() {
+          _captchaId = res['captcha_id'];
+          _captchaBase64 = res['image_base64'];
+          _offlineCaptchaText = res['offline_text'];
+          _isLoadingCaptcha = false;
+        });
       }
-    } finally {
-      if (mounted) setState(() => _isLoadingCaptcha = false);
+    } catch (e) {
+      if (mounted && _captchaId == null) {
+        final fallback = ApiService.generateLocalCaptcha();
+        setState(() {
+          _captchaId = fallback['captcha_id'];
+          _offlineCaptchaText = fallback['offline_text'];
+          _isLoadingCaptcha = false;
+        });
+      }
     }
   }
 
@@ -852,7 +873,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                             IconButton(
                               icon: const Icon(Icons.refresh_rounded, size: 18),
                               tooltip: 'Refresh CAPTCHA',
-                              onPressed: _isLoadingCaptcha ? null : _loadCaptcha,
+                              onPressed: () => _loadCaptcha(manualRefresh: true),
                             ),
                           ],
                         ),

@@ -31,7 +31,7 @@ class ApiService {
     try {
       final response = await http
           .get(Uri.parse('${ApiConfig.baseUrl}/api/auth/captcha'))
-          .timeout(const Duration(milliseconds: 3500));
+          .timeout(const Duration(milliseconds: 1200));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data is Map<String, dynamic> && data['status'] == 'success') {
@@ -41,10 +41,10 @@ class ApiService {
     } catch (e) {
       debugPrint('Live captcha network latency/offline: $e. Using high-speed local security CAPTCHA.');
     }
-    return _generateLocalCaptcha();
+    return generateLocalCaptcha();
   }
 
-  static Map<String, dynamic> _generateLocalCaptcha() {
+  static Map<String, dynamic> generateLocalCaptcha() {
     const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
     final rand = Random();
     final code = List.generate(5, (_) => chars[rand.nextInt(chars.length)]).join();
