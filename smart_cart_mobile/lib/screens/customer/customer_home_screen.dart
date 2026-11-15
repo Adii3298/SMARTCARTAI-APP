@@ -2189,8 +2189,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 final totalItems = comp['total_items_requested'] ?? 0;
                 final availItems = comp['available_count'] ?? 0;
                 final bill = comp['total_bill'] ?? 0.0;
-                final dist = st['distance_km'] ?? 0.5;
+                final dist = (st['distance_km'] is num) ? (st['distance_km'] as num).toDouble() : 0.5;
                 final deliveryMins = st['estimated_delivery_minutes'] ?? 15;
+                final compDeliveryFee = (comp['delivery_fee'] is num)
+                    ? (comp['delivery_fee'] as num).toDouble()
+                    : (dist * 50.0);
 
                 return InkWell(
                   onTap: () {
@@ -2300,15 +2303,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: (bill >= 200.0) ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                                    color: const Color(0xFFFFFBEB),
                                     borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFFDE68A)),
                                   ),
                                   child: Text(
-                                    (bill >= 200.0) ? 'FREE Delv' : '+₹30 Delv',
-                                    style: TextStyle(
+                                    '+₹${compDeliveryFee.toStringAsFixed(0)} Delv (${dist.toStringAsFixed(1)}km)',
+                                    style: const TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
-                                      color: (bill >= 200.0) ? const Color(0xFF047857) : const Color(0xFFB45309),
+                                      color: Color(0xFFB45309),
                                     ),
                                   ),
                                 ),
