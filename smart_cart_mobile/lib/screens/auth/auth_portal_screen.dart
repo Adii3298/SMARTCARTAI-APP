@@ -27,10 +27,15 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
   // --- Registration State ---
   final _regNameController = TextEditingController();
   final _regMobileController = TextEditingController();
+  final _regPasswordController = TextEditingController();
   final _regEmailController = TextEditingController();
   final _regAddressController = TextEditingController();
   final _regAreaController = TextEditingController();
   final _regPincodeController = TextEditingController();
+
+  // Password visibility states
+  bool _obscureRegPassword = true;
+  bool _obscureLoginPassword = true;
 
   // Merchant specific
   final _storeNameController = TextEditingController();
@@ -74,6 +79,7 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
     _tabController.dispose();
     _regNameController.dispose();
     _regMobileController.dispose();
+    _regPasswordController.dispose();
     _regEmailController.dispose();
     _regAddressController.dispose();
     _regAreaController.dispose();
@@ -179,12 +185,28 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
       return;
     }
 
+    if (_regPasswordController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please create a password for your account')),
+      );
+      return;
+    }
+
+    if (_regPasswordController.text.trim().length < 4) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 4 characters long')),
+      );
+      return;
+    }
+
     setState(() => _isRegistering = true);
     try {
+      final customPassword = _regPasswordController.text.trim();
       final res = await ApiService().register(
         role: widget.portalRole,
         name: _regNameController.text.trim(),
         mobile: _regMobileController.text.trim(),
+        password: customPassword,
         email: _regEmailController.text.trim().isNotEmpty ? _regEmailController.text.trim() : null,
         address: _regAddressController.text.trim().isNotEmpty ? _regAddressController.text.trim() : null,
         area: _regAreaController.text.trim().isNotEmpty ? _regAreaController.text.trim() : null,
@@ -292,7 +314,10 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                       SelectableText('${credentials['user_id']}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF059669))),
                       const Spacer(),
                       const Text('Password: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      SelectableText('${credentials['default_password']}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF059669))),
+                      SelectableText(
+                        '${credentials['password'] ?? credentials['default_password'] ?? _regPasswordController.text.trim()}',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF059669)),
+                      ),
                     ],
                   ),
                 ],
@@ -310,8 +335,9 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              _loginIdController.text = credentials['user_id'];
-              _passwordController.text = credentials['default_password'];
+              final registeredPassword = '${credentials['password'] ?? credentials['default_password'] ?? _regPasswordController.text.trim()}';
+              _loginIdController.text = '${credentials['user_id'] ?? credentials['mobile'] ?? _regMobileController.text.trim()}';
+              _passwordController.text = registeredPassword;
               _tabController.animateTo(0);
               _loadCaptcha();
             },
@@ -599,6 +625,29 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                       labelText: 'Mobile Number (10 Digits) *',
                       hintText: 'Enter 10-digit mobile number',
                       prefixIcon: const Icon(Icons.phone_iphone_rounded),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Create Password for Portal Login
+                  TextField(
+                    controller: _regPasswordController,
+                    obscureText: _obscureRegPassword,
+                    decoration: InputDecoration(
+                      labelText: 'Create Login Password *',
+                      hintText: 'Enter password (min 4 characters)',
+                      prefixIcon: const Icon(Icons.lock_outline_rounded),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureRegPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _obscureRegPassword = !_obscureRegPassword),
+                      ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
                       fillColor: Colors.white,
@@ -902,10 +951,18 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
 
                   TextField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: _obscureLoginPassword,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureLoginPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: () => setState(() => _obscureLoginPassword = !_obscureLoginPassword),
+                      ),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       filled: true,
                       fillColor: Colors.grey.shade50,

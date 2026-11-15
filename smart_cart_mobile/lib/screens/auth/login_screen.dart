@@ -21,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _captchaBase64;
   bool _isLoading = false;
   bool _isLoadingCaptcha = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -170,10 +171,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
                         TextField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           decoration: InputDecoration(
                             labelText: 'Password',
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                         ),
