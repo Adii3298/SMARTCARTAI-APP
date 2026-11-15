@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../services/navigation/url_launcher_service.dart';
 import '../widgets/server_config_dialog.dart';
 
 class PortalGatewayScreen extends StatelessWidget {
@@ -194,90 +193,6 @@ class PortalGatewayScreen extends StatelessWidget {
                   features: const ['👑 Platform-wide GMV & Orders', '🔍 Multi-Portal Inspection', '🏢 Smart Cart Nodes Map', '👥 User Status Control'],
                   actionText: 'Enter Admin Center',
                   onTap: () => onSelectPortal('admin'),
-                ),
-                const SizedBox(height: 22),
-
-                // Android Standalone APK Card
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0F231C), Color(0xFF0A1813)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF10B981).withOpacity(0.12),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(Icons.android_rounded, color: Color(0xFF34D399), size: 28),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Install Standalone Android App',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                SizedBox(height: 3),
-                                Text(
-                                  'Native Android APK with high-speed camera scanning & zero latency.',
-                                  style: TextStyle(
-                                    color: Color(0xFF94A3B8),
-                                    fontSize: 11,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF10B981),
-                            foregroundColor: const Color(0xFF090D16),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
-                          ),
-                          icon: const Icon(Icons.download_rounded, size: 20),
-                          label: const Text(
-                            'Download SmartCart-Release.apk (53.7 MB)',
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-                          ),
-                          onPressed: () {
-                            openExternalUrl('/static/SmartCart-Release.apk');
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
                 const SizedBox(height: 24),
 
