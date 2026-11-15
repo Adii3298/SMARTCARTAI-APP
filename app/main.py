@@ -16,7 +16,7 @@ import base64
 import random
 import datetime
 import difflib
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, status, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
