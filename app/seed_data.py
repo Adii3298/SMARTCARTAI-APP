@@ -142,7 +142,7 @@ def seed_database(db: Session):
     db.commit()
 
     # 4. 75+ Grocery Items
-    from scratch.seed_50_groceries import GROCERY_CATALOG
+    from .grocery_catalog import GROCERY_CATALOG
     for it in GROCERY_CATALOG:
         db.add(ProductInventory(
             store_id=store1.id,
