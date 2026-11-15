@@ -62,7 +62,7 @@ class OrderModel {
   final String? deliveryPartnerVehicle;
   final List<OrderItemModel> items;
 
-  bool get isFreeDelivery => deliveryFee == 0.0;
+  bool get isFreeDelivery => false; // Free delivery disabled (₹50/km for customer)
   double get itemsSubtotal => (totalAmount - deliveryFee).clamp(0.0, double.infinity);
 
   OrderModel({
@@ -105,7 +105,7 @@ class OrderModel {
     double parsedTotal = (json['total_amount'] is num) ? (json['total_amount'] as num).toDouble() : 0.0;
     double parsedFee = (json['delivery_fee'] is num)
         ? (json['delivery_fee'] as num).toDouble()
-        : (parsedTotal >= 200.0 ? 0.0 : (parsedTotal > 0.0 ? 30.0 : 0.0));
+        : 50.0;
 
     return OrderModel(
       id: json['id'] ?? 0,

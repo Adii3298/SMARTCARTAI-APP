@@ -710,16 +710,18 @@ def match_item_to_inventory(store: Store, req_name: str) -> Optional[ProductInve
 
 
 # ==============================================================================
-# DELIVERY PRICING POLICY: Free Delivery above ₹200. Standard ₹30 below ₹200.
+# DELIVERY PRICING POLICY: ₹50 per kilometer for customer. Free delivery disabled.
 # ==============================================================================
-FREE_DELIVERY_THRESHOLD = 200.0
-STANDARD_DELIVERY_FEE = 30.0
+DELIVERY_RATE_PER_KM = 50.0
 
-def calculate_delivery_fee(items_subtotal: float) -> float:
-    """Returns 0.0 (FREE Delivery) if items subtotal is >= 200.0, else 30.0."""
-    if items_subtotal <= 0:
-        return 0.0
-    return 0.0 if items_subtotal >= FREE_DELIVERY_THRESHOLD else STANDARD_DELIVERY_FEE
+def get_store_distance_km(store_id: int) -> float:
+    dist_map = {1: 0.4, 2: 0.8, 3: 1.1, 4: 1.5, 5: 0.6}
+    return dist_map.get(store_id, 0.9)
+
+def calculate_delivery_fee(distance_km: float = 1.0) -> float:
+    """Calculates delivery fee at ₹50 per km for customer. Free delivery is NOT available."""
+    dist = max(float(distance_km), 0.1)
+    return round(dist * DELIVERY_RATE_PER_KM, 2)
 
 
 def normalize_item_quantity_and_unit(requested_qty: float, requested_unit: str, inv_unit: str) -> Tuple[float, str]:
@@ -795,11 +797,9 @@ def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str,
 
     avail_pct = round((len(available_items) / max(len(items), 1)) * 100, 1)
 
-    # 🚚 Delivery Pricing: Free above ₹200, ₹30 below ₹200
+    # 🚚 Delivery Pricing: ₹50 per km (Free delivery NOT available)
     items_subtotal = round(total_bill, 2)
-    delivery_fee = calculate_delivery_fee(items_subtotal)
-    is_free = items_subtotal >= FREE_DELIVERY_THRESHOLD
-    needed_for_free = max(0.0, round(FREE_DELIVERY_THRESHOLD - items_subtotal, 2)) if not is_free else 0.0
+    delivery_fee = calculate_delivery_fee(distance_km)
     grand_total = round(items_subtotal + delivery_fee, 2)
 
     return {
@@ -825,9 +825,11 @@ def check_single_store_availability(store: Store, items: List[Any]) -> Dict[str,
         "missing_items": missing_items,
         "items_subtotal": items_subtotal,
         "delivery_fee": delivery_fee,
-        "is_free_delivery": is_free,
-        "free_delivery_threshold": FREE_DELIVERY_THRESHOLD,
-        "amount_needed_for_free_delivery": needed_for_free,
+        "delivery_rate_per_km": DELIVERY_RATE_PER_KM,
+        "distance_km": distance_km,
+        "is_free_delivery": False,
+        "free_delivery_threshold": None,
+        "amount_needed_for_free_delivery": 0.0,
         "total_bill": grand_total
     }
 
@@ -993,7 +995,8 @@ def create_customer_order(data: CreateOrderRequest, customer_id: int, db: Sessio
         db.add(order_item)
 
     items_total = round(calc_total, 2)
-    delivery_fee = calculate_delivery_fee(items_total)
+    dist = get_store_distance_km(store.id)
+    delivery_fee = calculate_delivery_fee(dist)
     new_order.delivery_fee = delivery_fee
     new_order.total_amount = round(items_total + delivery_fee, 2)
     db.commit()
@@ -1010,7 +1013,9 @@ def create_customer_order(data: CreateOrderRequest, customer_id: int, db: Sessio
             "store_name": store.name,
             "items_subtotal": items_total,
             "delivery_fee": delivery_fee,
-            "is_free_delivery": items_total >= FREE_DELIVERY_THRESHOLD,
+            "delivery_rate_per_km": DELIVERY_RATE_PER_KM,
+            "distance_km": dist,
+            "is_free_delivery": False,
             "total_amount": new_order.total_amount,
             "items_count": len(data.items)
         }
@@ -1052,7 +1057,7 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
 
     upi_details = generate_upi_payment_details(store, order)
 
-    curr_delivery_fee = order.delivery_fee if (hasattr(order, "delivery_fee") and order.delivery_fee is not None) else calculate_delivery_fee(order.total_amount)
+    curr_delivery_fee = order.delivery_fee if (hasattr(order, "delivery_fee") and order.delivery_fee is not None) else calculate_delivery_fee(get_store_distance_km(order.store_id))
     items_subtotal = round(order.total_amount - curr_delivery_fee, 2)
 
     return {
@@ -1065,8 +1070,9 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
             "total_amount": order.total_amount,
             "items_subtotal": items_subtotal,
             "delivery_fee": curr_delivery_fee,
-            "is_free_delivery": curr_delivery_fee == 0.0,
-            "free_delivery_threshold": FREE_DELIVERY_THRESHOLD,
+            "delivery_rate_per_km": DELIVERY_RATE_PER_KM,
+            "is_free_delivery": False,
+            "free_delivery_threshold": None,
             "payment_mode": order.payment_mode,
             "payment_status": order.payment_status,
             "delivery_code": order.delivery_code,
@@ -1253,7 +1259,8 @@ def merchant_pack_and_confirm(data: MerchantConfirmRequest, merchant_id: int, db
             calc_total += db_item.subtotal
 
     items_subtotal = round(calc_total, 2) if calc_total > 0 else round(data.total_amount, 2)
-    order.delivery_fee = calculate_delivery_fee(items_subtotal)
+    if not order.delivery_fee or order.delivery_fee <= 0.0:
+        order.delivery_fee = calculate_delivery_fee(get_store_distance_km(order.store_id))
     order.total_amount = round(items_subtotal + order.delivery_fee, 2)
     order.status = "PACKING_CONFIRMED"
     order.confirmed_at = utcnow()
@@ -1271,7 +1278,7 @@ def merchant_pack_and_confirm(data: MerchantConfirmRequest, merchant_id: int, db
         "order_id": order.id,
         "items_subtotal": items_subtotal,
         "delivery_fee": order.delivery_fee,
-        "is_free_delivery": order.delivery_fee == 0.0,
+        "is_free_delivery": False,
         "total_amount": order.total_amount
     }
 
@@ -1295,7 +1302,8 @@ def merchant_quick_confirm_order(order_id: int, db: Session = Depends(get_db)):
         calc_total += it.subtotal
 
     items_subtotal = round(calc_total, 2)
-    order.delivery_fee = calculate_delivery_fee(items_subtotal)
+    if not order.delivery_fee or order.delivery_fee <= 0.0:
+        order.delivery_fee = calculate_delivery_fee(get_store_distance_km(order.store_id))
     order.total_amount = round(items_subtotal + order.delivery_fee, 2)
     order.status = "PACKING_CONFIRMED"
     order.confirmed_at = utcnow()
@@ -1312,7 +1320,7 @@ def merchant_quick_confirm_order(order_id: int, db: Session = Depends(get_db)):
         "order_id": order.id,
         "items_subtotal": items_subtotal,
         "delivery_fee": order.delivery_fee,
-        "is_free_delivery": order.delivery_fee == 0.0,
+        "is_free_delivery": False,
         "total_amount": order.total_amount
     }
 

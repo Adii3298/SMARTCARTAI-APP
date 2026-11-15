@@ -261,9 +261,9 @@ const CustomerModule = {
 
         // Render available items breakdown
         const itemsBreakdown = document.getElementById('avail-items-breakdown');
-        const deliveryFee = avail.delivery_fee !== undefined ? avail.delivery_fee : (avail.total_bill >= 200 ? 0.0 : 30.0);
-        const isFree = deliveryFee === 0;
+        const deliveryFee = avail.delivery_fee !== undefined ? avail.delivery_fee : 50.0;
         const subtotal = avail.items_subtotal !== undefined ? avail.items_subtotal : (avail.total_bill - deliveryFee);
+        const distKm = avail.distance_km || (avail.store && avail.store.distance_km) || 1.0;
 
         itemsBreakdown.innerHTML = avail.available_items.map(it => `
             <div class="flex justify-between items-center py-1.5 border-b border-slate-100 text-xs">
@@ -279,10 +279,8 @@ const CustomerModule = {
                 <span>₹${subtotal.toFixed(2)}</span>
             </div>
             <div class="flex justify-between items-center py-1 text-xs">
-                <span class="text-slate-600">Delivery Fee</span>
-                <span class="${isFree ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}">
-                    ${isFree ? '🎉 FREE (Orders above ₹200)' : '+₹' + deliveryFee.toFixed(2)}
-                </span>
+                <span class="text-slate-600">Delivery Fee (${distKm} km @ ₹50/km)</span>
+                <span class="text-amber-600 font-bold">+₹${deliveryFee.toFixed(2)}</span>
             </div>
         `;
     },
