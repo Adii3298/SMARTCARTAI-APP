@@ -18,8 +18,8 @@ class ApiConfig {
       }
       return 'http://127.0.0.1:8000';
     } else if (Platform.isAndroid) {
-      // Direct connection to PC's local network IP for physical Android devices & emulators
-      return 'http://10.50.194.120:8000';
+      // Primary: Render Live Cloud Backend (works worldwide on 4G/5G/WiFi with 0 setup)
+      return 'https://smartcartai-app.onrender.com';
     } else {
       return 'http://127.0.0.1:8000';
     }

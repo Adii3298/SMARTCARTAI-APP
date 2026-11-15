@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart';
 import 'screens/portal_gateway_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/auth/auth_portal_screen.dart';
 import 'screens/customer/customer_home_screen.dart';
 import 'screens/merchant/merchant_dashboard_screen.dart';
@@ -49,6 +50,7 @@ class MainMobileShell extends StatefulWidget {
 }
 
 class _MainMobileShellState extends State<MainMobileShell> {
+  bool _showSplash = true;
   int? _actualAdminId; // Preserves Admin ID while in supervision mode
   String? _selectedPortal; // 'customer', 'merchant', 'delivery', 'admin' or null (Gateway)
 
@@ -122,6 +124,14 @@ class _MainMobileShellState extends State<MainMobileShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showSplash) {
+      return SplashScreen(
+        onFinish: () {
+          if (mounted) setState(() => _showSplash = false);
+        },
+      );
+    }
+
     final user = ApiService().currentUser;
 
     // 1. If not logged in:
