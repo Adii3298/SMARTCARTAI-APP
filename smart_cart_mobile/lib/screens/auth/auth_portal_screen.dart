@@ -55,10 +55,9 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
   @override
   void initState() {
     super.initState();
-    // Admin only has Login tab (1 tab); others have Sign In & Register (2 tabs)
-    final tabCount = widget.portalRole == 'admin' ? 1 : 2;
-    final initialIdx = widget.portalRole == 'admin' ? 0 : widget.initialTabIndex;
-    _tabController = TabController(length: tabCount, vsync: this, initialIndex: initialIdx);
+    // All portals (Customer, Merchant, Delivery, Admin) support Sign In and Registration
+    const tabCount = 2;
+    _tabController = TabController(length: tabCount, vsync: this, initialIndex: widget.initialTabIndex);
     
     // Instant zero-delay local security CAPTCHA on frame 0 (never shows a spinner)
     final instant = ApiService.generateLocalCaptcha();
@@ -120,6 +119,49 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
         });
       }
     }
+  }
+
+  String _getDemoCredentialText() {
+    switch (widget.portalRole) {
+      case 'admin':
+        return 'Mobile: 9999900000  •  Pwd: admin123';
+      case 'customer':
+        return 'Mobile: 9876543210  •  Pwd: cust123';
+      case 'merchant':
+        return 'Mobile: 9845012345  •  Pwd: merc123';
+      case 'delivery':
+        return 'Mobile: 9731011223  •  Pwd: delv123';
+      default:
+        return '';
+    }
+  }
+
+  void _fillDemoCredentials() {
+    switch (widget.portalRole) {
+      case 'admin':
+        _loginIdController.text = '9999900000';
+        _passwordController.text = 'admin123';
+        break;
+      case 'customer':
+        _loginIdController.text = '9876543210';
+        _passwordController.text = 'cust123';
+        break;
+      case 'merchant':
+        _loginIdController.text = '9845012345';
+        _passwordController.text = 'merc123';
+        break;
+      case 'delivery':
+        _loginIdController.text = '9731011223';
+        _passwordController.text = 'delv123';
+        break;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${widget.portalRole.toUpperCase()} credentials filled! Now enter the CAPTCHA below.'),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF0F172A),
+      ),
+    );
   }
 
   Future<void> _handleRegister() async {
@@ -354,8 +396,6 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
         break;
     }
 
-    final isAdmin = widget.portalRole == 'admin';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -436,73 +476,70 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                   ),
                   const SizedBox(height: 12),
 
-                  // Segmented Tabs (For Admin, only 1 Tab: Sign In)
-                  if (!isAdmin)
-                    Container(
-                      height: 44,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TabBar(
-                        controller: _tabController,
-                        indicator: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelColor: themeColor,
-                        unselectedLabelColor: const Color(0xFF64748B),
-                        labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-                        dividerColor: Colors.transparent,
-                        tabs: [
-                          const Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.lock_rounded, size: 15),
-                                SizedBox(width: 6),
-                                Text('1. Sign In (CAPTCHA)'),
-                              ],
-                            ),
-                          ),
-                          Tab(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.person_add_alt_1_rounded, size: 15),
-                                const SizedBox(width: 6),
-                                Text('2. Register ${widget.portalRole == "customer" ? "Shopper" : widget.portalRole.capitalize()}'),
-                              ],
-                            ),
+                  // Segmented Tabs (All 4 Portals have Sign In & Register)
+                  Container(
+                    height: 44,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      indicator: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      labelColor: themeColor,
+                      unselectedLabelColor: const Color(0xFF64748B),
+                      labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
+                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                      dividerColor: Colors.transparent,
+                      tabs: [
+                        const Tab(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.lock_rounded, size: 15),
+                              SizedBox(width: 6),
+                              Text('1. Sign In (CAPTCHA)'),
+                            ],
+                          ),
+                        ),
+                        Tab(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.person_add_alt_1_rounded, size: 15),
+                              const SizedBox(width: 6),
+                              Text('2. Register ${widget.portalRole == "customer" ? "Shopper" : widget.portalRole.capitalize()}'),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),
 
             // Tab Views
             Expanded(
-              child: isAdmin
-                  ? _buildLoginTab(themeColor)
-                  : TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildLoginTab(themeColor),
-                        _buildRegistrationTab(themeColor),
-                      ],
-                    ),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildLoginTab(themeColor),
+                  _buildRegistrationTab(themeColor),
+                ],
+              ),
             ),
           ],
         ),
@@ -802,7 +839,53 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
+
+                  // Demo Credentials Helper Card
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: themeColor.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: themeColor.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.vpn_key_rounded, size: 18, color: themeColor),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Default Pre-configured Account:',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: themeColor),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _getDemoCredentialText(),
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF1E293B), fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            elevation: 0,
+                          ),
+                          onPressed: _fillDemoCredentials,
+                          child: const Text('Auto-Fill', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   TextField(
                     controller: _loginIdController,
@@ -1039,18 +1122,16 @@ class _AuthPortalScreenState extends State<AuthPortalScreen> with SingleTickerPr
               ],
             ),
           ),
-          if (widget.portalRole != 'admin') ...[
-            const SizedBox(height: 14),
-            Center(
-              child: TextButton(
-                onPressed: () => _tabController.animateTo(1),
-                child: Text(
-                  'Don\'t have an account? Register ${widget.portalRole == "customer" ? "New Shopper" : widget.portalRole.capitalize()} →',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 12),
-                ),
+          const SizedBox(height: 14),
+          Center(
+            child: TextButton(
+              onPressed: () => _tabController.animateTo(1),
+              child: Text(
+                'Don\'t have an account? Register ${widget.portalRole == "customer" ? "New Shopper" : widget.portalRole.capitalize()} →',
+                style: TextStyle(fontWeight: FontWeight.bold, color: themeColor, fontSize: 12),
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
