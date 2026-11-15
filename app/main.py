@@ -20,7 +20,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from fastapi import FastAPI, Depends, HTTPException, Request, Response, status, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -106,6 +106,34 @@ def health_check():
         "timestamp": utcnow().strftime("%I:%M:%S %p, %d %b %Y"),
         "active_stores": ["Navjeevan Supermart", "More Provision"]
     }
+
+
+@app.get("/api/download/apk")
+@app.get("/download/apk")
+@app.get("/SmartCart-Release.apk")
+def download_android_apk():
+    """Provides direct, high-speed download for the compiled Android release APK."""
+    candidates = [
+        os.path.join(STATIC_DIR, "SmartCart-Release.apk"),
+        os.path.join(STATIC_DIR, "SmartCart.apk"),
+        os.path.abspath(os.path.join(BASE_DIR, "..", "SmartCart-Release.apk")),
+        os.path.abspath(os.path.join(BASE_DIR, "..", "smart_cart_mobile", "build", "app", "outputs", "flutter-apk", "app-release.apk")),
+    ]
+    for path in candidates:
+        if os.path.exists(path) and os.path.getsize(path) > 1000000:
+            return FileResponse(
+                path=path,
+                filename="SmartCart-Release.apk",
+                media_type="application/vnd.android.package-archive",
+                headers={
+                    "Content-Disposition": 'attachment; filename="SmartCart-Release.apk"',
+                    "Cache-Control": "public, max-age=3600"
+                }
+            )
+
+    # Cloud fallback if binary not in ephemeral container
+    github_url = "https://github.com/Adii3298/SMARTCARTAI-APP/releases/latest/download/SmartCart-Release.apk"
+    return RedirectResponse(url=github_url, status_code=302)
 
 
 @app.get("/api/auth/captcha")

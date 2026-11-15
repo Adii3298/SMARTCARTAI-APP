@@ -3,9 +3,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 void openExternalUrl(String url) {
   try {
-    html.window.open(url, '_blank');
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', 'SmartCart-Release.apk')
+      ..target = '_blank';
+    html.document.body?.append(anchor);
+    anchor.click();
+    anchor.remove();
   } catch (e) {
-    // Fallback
+    try {
+      html.window.open(url, '_blank');
+    } catch (_) {}
   }
 }
 
