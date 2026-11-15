@@ -451,6 +451,18 @@ class ApiService {
     throw Exception(data['detail'] ?? 'Failed to confirm order payment');
   }
 
+  Future<Map<String, dynamic>> getPaymentDetails(int orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/customer/orders/$orderId/payment_details'),
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (_) {}
+    return {};
+  }
+
   // 5. Merchant Dashboard & Inventory
   Future<List<OrderModel>> fetchMerchantOrders(int merchantId, {int? storeId}) async {
     var url = '${ApiConfig.baseUrl}/api/merchant/orders?merchant_id=$merchantId';

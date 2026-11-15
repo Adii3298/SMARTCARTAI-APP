@@ -9,6 +9,7 @@ import '../../models/ocr_result_model.dart';
 import '../../models/store_model.dart';
 import '../../models/order_model.dart';
 import '../../services/navigation/url_launcher_service.dart';
+import '../../config/api_config.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   final VoidCallback onRefreshNeeded;
@@ -612,12 +613,30 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         ? order.upiUri!
         : 'upi://pay?pa=$storeUpi&pn=${Uri.encodeComponent(order.storeName)}&am=$amountStr&cu=INR&tn=SmartCart%20${order.orderNumber}';
 
+    String? currentQrBase64 = order.upiQrCode;
+    final directQrImageUrl = '${ApiConfig.baseUrl}/api/payment/qr_image?order_id=${order.id}&data=${Uri.encodeComponent(upiUriString)}';
+    final fallbackPublicQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${Uri.encodeComponent(upiUriString)}';
+    bool hasTriggeredFetch = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Container(
+        builder: (context, setModalState) {
+          if (!hasTriggeredFetch && (currentQrBase64 == null || currentQrBase64!.isEmpty)) {
+            hasTriggeredFetch = true;
+            ApiService().getPaymentDetails(order.id).then((details) {
+              final newQr = details['payment_details']?['upi_qr_code'] ?? details['upi_qr_code'];
+              if (newQr != null && (newQr as String).length > 20) {
+                setModalState(() {
+                  currentQrBase64 = newQr;
+                });
+              }
+            }).catchError((_) {});
+          }
+
+          return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -701,29 +720,68 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     ),
                     child: Column(
                       children: [
-                        if (order.upiQrCode != null && order.upiQrCode!.isNotEmpty)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(
-                              base64Decode(order.upiQrCode!.replaceFirst(RegExp(r'data:image/[^;]+;base64,'), '')),
-                              width: 190,
-                              height: 190,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => const SizedBox(
-                                width: 190,
-                                height: 190,
-                                child: Center(
-                                  child: Icon(Icons.qr_code_2_rounded, size: 80, color: Color(0xFF059669)),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: (currentQrBase64 != null && currentQrBase64!.isNotEmpty)
+                              ? Image.memory(
+                                  base64Decode(currentQrBase64!.replaceFirst(RegExp(r'data:image/[^;]+;base64,'), '')),
+                                  width: 190,
+                                  height: 190,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => Image.network(
+                                    directQrImageUrl,
+                                    width: 190,
+                                    height: 190,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => Image.network(
+                                      fallbackPublicQrUrl,
+                                      width: 190,
+                                      height: 190,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) => const SizedBox(
+                                        width: 190,
+                                        height: 190,
+                                        child: Center(
+                                          child: Icon(Icons.qr_code_2_rounded, size: 80, color: Color(0xFF059669)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Image.network(
+                                  directQrImageUrl,
+                                  width: 190,
+                                  height: 190,
+                                  fit: BoxFit.contain,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const SizedBox(
+                                      width: 190,
+                                      height: 190,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 28,
+                                          height: 28,
+                                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (_, __, ___) => Image.network(
+                                    fallbackPublicQrUrl,
+                                    width: 190,
+                                    height: 190,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const SizedBox(
+                                      width: 190,
+                                      height: 190,
+                                      child: Center(
+                                        child: Icon(Icons.qr_code_2_rounded, size: 80, color: Color(0xFF059669)),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          )
-                        else
-                          const SizedBox(
-                            width: 190,
-                            height: 190,
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
+                        ),
                         const SizedBox(height: 10),
                         const Row(
                           mainAxisSize: MainAxisSize.min,
@@ -880,9 +938,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ],
             ),
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  );
   }
 
   Widget _buildUpiAppChip(String name, String upiUri) {
