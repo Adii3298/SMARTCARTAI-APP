@@ -120,168 +120,25 @@ class PortalGatewayScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Hero Headline Card
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF131D30), Color(0xFF0F172A)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFF1E293B), width: 1.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF059669).withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.auto_awesome_rounded, size: 13, color: Color(0xFF34D399)),
-                            SizedBox(width: 6),
-                            Text(
-                              'AI-POWERED HYPERLOCAL PLATFORM',
-                              style: TextStyle(
-                                color: Color(0xFF34D399),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 10,
-                                letterSpacing: 0.9,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'Next-Gen Kirana Network',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Digitize handwritten grocery notes with Computer Vision, compare local store stocks in real-time, and dispatch orders with secure 6-digit OTPs.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // 4 Key Capability Metric Badges
-                      Row(
-                        children: [
-                          _buildMetricPill(
-                            icon: Icons.bolt_rounded,
-                            title: '< 1.2s',
-                            subtitle: 'AI OCR',
-                            color: const Color(0xFF10B981),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildMetricPill(
-                            icon: Icons.store_rounded,
-                            title: '2 Stores',
-                            subtitle: 'Kirana Stock',
-                            color: const Color(0xFFF59E0B),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildMetricPill(
-                            icon: Icons.pin_rounded,
-                            title: '6-Digit',
-                            subtitle: 'OTP Delivery',
-                            color: const Color(0xFF3B82F6),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildMetricPill(
-                            icon: Icons.security_rounded,
-                            title: '4 Roles',
-                            subtitle: 'Strict Auth',
-                            color: const Color(0xFF8B5CF6),
-                          ),
-                        ],
-                      ),
-                    ],
+                // Clean Modern Section Header
+                const Text(
+                  'Select Your Portal',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.4,
                   ),
                 ),
-                const SizedBox(height: 20),
-
-                // Quick Launch Bar
-                const Row(
-                  children: [
-                    Icon(Icons.touch_app_rounded, color: Color(0xFF34D399), size: 18),
-                    SizedBox(width: 8),
-                    Text(
-                      'DIRECT PORTAL LAUNCH',
-                      style: TextStyle(
-                        color: Color(0xFFE2E8F0),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                const Text(
+                  'Choose your designated role to enter the application:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF94A3B8),
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildQuickPill(
-                        label: 'Customer',
-                        icon: Icons.shopping_basket_rounded,
-                        color: const Color(0xFF059669),
-                        onTap: () => onSelectPortal('customer'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildQuickPill(
-                        label: 'Kirana Store',
-                        icon: Icons.storefront_rounded,
-                        color: const Color(0xFFD97706),
-                        onTap: () => onSelectPortal('merchant'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildQuickPill(
-                        label: 'Delivery',
-                        icon: Icons.delivery_dining_rounded,
-                        color: const Color(0xFF2563EB),
-                        onTap: () => onSelectPortal('delivery'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildQuickPill(
-                        label: 'Admin',
-                        icon: Icons.admin_panel_settings_rounded,
-                        color: const Color(0xFF7C3AED),
-                        onTap: () => onSelectPortal('admin'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 18),
 
                 // 1. CUSTOMER PORTAL CARD
                 _buildPortalCard(
@@ -434,88 +291,6 @@ class PortalGatewayScreen extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricPill({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 18, color: color),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: color.withOpacity(0.9),
-                fontWeight: FontWeight.w600,
-                fontSize: 9,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickPill({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.14),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.4), width: 1.2),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
           ),
         ),
       ),
