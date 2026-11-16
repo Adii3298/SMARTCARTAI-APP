@@ -22,13 +22,22 @@ class OrderItemModel {
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    double qty = 1.0;
+    if (json['packed_quantity'] is num) {
+      qty = (json['packed_quantity'] as num).toDouble();
+    } else if (json['requested_quantity'] is num) {
+      qty = (json['requested_quantity'] as num).toDouble();
+    } else if (json['quantity'] is num) {
+      qty = (json['quantity'] as num).toDouble();
+    }
+
     return OrderItemModel(
       id: json['id'] ?? 0,
       productName: json['product_name'] ?? '',
       brand: json['brand'] ?? '',
-      requestedQuantity: (json['requested_quantity'] is num) ? (json['requested_quantity'] as num).toDouble() : 1.0,
-      packedQuantity: (json['packed_quantity'] is num) ? (json['packed_quantity'] as num).toDouble() : 1.0,
-      unit: json['unit'] ?? 'packet',
+      requestedQuantity: qty,
+      packedQuantity: qty,
+      unit: json['unit'] ?? json['requested_unit'] ?? 'packet',
       unitPrice: (json['unit_price'] is num) ? (json['unit_price'] as num).toDouble() : 0.0,
       subtotal: (json['subtotal'] is num) ? (json['subtotal'] as num).toDouble() : 0.0,
       isAvailable: json['is_available'] ?? true,

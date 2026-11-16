@@ -32,6 +32,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   bool _isComparingStores = false;
 
   OrderModel? _activeOrder;
+  List<OrderModel> _orderHistory = [];
+  bool _isLoadingHistory = false;
   String _checkoutPaymentPreference = 'COD';
   Timer? _orderPollingTimer;
 
@@ -62,6 +64,26 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Future<void> _loadInitialData() async {
     await _loadStores();
     await _loadActiveOrder();
+    await _loadOrderHistory();
+  }
+
+  Future<void> _loadOrderHistory() async {
+    final user = ApiService().currentUser;
+    if (user == null) return;
+    setState(() => _isLoadingHistory = true);
+    try {
+      final list = await ApiService().fetchCustomerOrderHistory(user.id);
+      if (mounted) {
+        setState(() {
+          _orderHistory = list;
+          _isLoadingHistory = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingHistory = false);
+      }
+    }
   }
 
   Future<void> _loadStores() async {
@@ -1165,6 +1187,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
           // Step 2: Extracted Grocery Items & Store Availability
           if (_ocrResult != null) _buildExtractedItemsSection(),
+
+          // Step 3: Past Orders & Grocery History
+          const SizedBox(height: 16),
+          _buildOrderHistorySection(),
         ],
       ),
     );
@@ -2660,6 +2686,234 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
               onPressed: _submitOrderToMerchant,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderHistorySection() {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF059669), size: 18),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Order History',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${_orderHistory.length}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, size: 20, color: Color(0xFF059669)),
+                  onPressed: _loadOrderHistory,
+                  tooltip: 'Refresh history',
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_isLoadingHistory)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF059669)),
+                ),
+              )
+            else if (_orderHistory.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.shopping_bag_outlined, size: 36, color: Colors.grey.shade400),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'No past orders yet',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Scan a handwritten grocery list above to order from your local Kirana store.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Column(
+                children: [
+                  for (final order in _orderHistory)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ExpansionTile(
+                        shape: const Border(),
+                        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                        leading: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: order.status == 'DELIVERED'
+                              ? const Color(0xFFD1FAE5)
+                              : (order.status == 'CANCELLED' ? Colors.red.shade50 : const Color(0xFFFEF3C7)),
+                          child: Icon(
+                            order.status == 'DELIVERED'
+                                ? Icons.check_circle_rounded
+                                : (order.status == 'CANCELLED' ? Icons.cancel_rounded : Icons.local_shipping_rounded),
+                            color: order.status == 'DELIVERED'
+                                ? const Color(0xFF10B981)
+                                : (order.status == 'CANCELLED' ? Colors.red : const Color(0xFFF59E0B)),
+                            size: 20,
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              order.orderNumber,
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '₹${order.totalAmount.toStringAsFixed(0)}',
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF059669)),
+                            ),
+                          ],
+                        ),
+                        subtitle: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${order.storeName} • ${order.createdAt}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: order.status == 'DELIVERED'
+                                    ? const Color(0xFFD1FAE5)
+                                    : (order.status == 'CANCELLED' ? Colors.red.shade50 : const Color(0xFFFEF3C7)),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                order.status.replaceAll('_', ' '),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  color: order.status == 'DELIVERED'
+                                      ? const Color(0xFF10B981)
+                                      : (order.status == 'CANCELLED' ? Colors.red : const Color(0xFFF59E0B)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        children: [
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Grocery Items (${order.items.length})',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black87),
+                              ),
+                              Text(
+                                'Payment: ${order.paymentMode}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          for (final it in order.items)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2.5),
+                              child: Row(
+                                children: [
+                                  const Text('• ', style: TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold)),
+                                  Expanded(
+                                    child: Text(
+                                      '${it.productName} (${it.requestedQuantity.toStringAsFixed(it.requestedQuantity.truncateToDouble() == it.requestedQuantity ? 0 : 1)} ${it.unit})',
+                                      style: const TextStyle(fontSize: 11, color: Colors.black87),
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${it.subtotal.toStringAsFixed(2)}',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 6),
+                          const Divider(height: 1, thickness: 0.5),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Delivery Fee:', style: TextStyle(fontSize: 10, color: Colors.brown, fontWeight: FontWeight.w600)),
+                              Text('₹${order.deliveryFee.toStringAsFixed(2)}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.brown)),
+                            ],
+                          ),
+                          if (order.deliveryCode.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Delivery Code:', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                Text(order.deliveryCode, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: Color(0xFF059669))),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
+              ),
           ],
         ),
       ),

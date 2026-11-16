@@ -1155,7 +1155,7 @@ def get_customer_active_order(customer_id: int, db: Session = Depends(get_db)):
 
 @app.get("/api/customer/orders/history")
 def get_customer_order_history(customer_id: int, db: Session = Depends(get_db)):
-    """Returns past completed/cancelled orders for the customer."""
+    """Returns past completed/cancelled orders for the customer with full items list."""
     orders = db.query(Order).filter(
         Order.customer_id == customer_id
     ).order_by(Order.id.desc()).all()
@@ -1169,16 +1169,82 @@ def get_customer_order_history(customer_id: int, db: Session = Depends(get_db)):
                 "status": o.status,
                 "store_name": o.store.name if o.store else "Local Kirana",
                 "total_amount": o.total_amount,
+                "delivery_fee": o.delivery_fee,
                 "payment_mode": o.payment_mode,
                 "delivery_code": o.delivery_code,
                 "items_count": len(o.items),
                 "created_at": o.created_at.strftime("%I:%M %p, %d %b %Y") if o.created_at else None,
                 "confirmed_at": o.confirmed_at.strftime("%I:%M %p, %d %b %Y") if o.confirmed_at else None,
                 "dispatched_at": o.dispatched_at.strftime("%I:%M %p, %d %b %Y") if o.dispatched_at else None,
-                "delivered_at": o.delivered_at.strftime("%I:%M %p, %d %b %Y") if o.delivered_at else None
+                "delivered_at": o.delivered_at.strftime("%I:%M %p, %d %b %Y") if o.delivered_at else None,
+                "items": [
+                    {
+                        "id": it.id,
+                        "product_name": it.product_name,
+                        "brand": it.brand,
+                        "quantity": it.packed_quantity or it.requested_quantity,
+                        "unit": it.requested_unit,
+                        "unit_price": it.unit_price,
+                        "subtotal": it.subtotal,
+                        "is_available": it.is_available
+                    }
+                    for it in o.items
+                ]
             }
             for o in orders
         ]
+    }
+
+
+@app.get("/api/orders/{order_id}")
+def get_single_order_details(order_id: int, db: Session = Depends(get_db)):
+    """Returns full order details with all grocery items, store, and rider details."""
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return {
+        "status": "success",
+        "order": {
+            "id": order.id,
+            "order_number": order.order_number,
+            "status": order.status,
+            "total_amount": order.total_amount,
+            "delivery_fee": order.delivery_fee,
+            "payment_mode": order.payment_mode,
+            "delivery_code": order.delivery_code,
+            "delivery_address": order.delivery_address,
+            "customer": {
+                "id": order.customer.id if order.customer else None,
+                "name": order.customer.name if order.customer else "Customer",
+                "mobile": order.customer.mobile if order.customer else ""
+            },
+            "store": {
+                "id": order.store.id if order.store else None,
+                "name": order.store.name if order.store else "Store",
+                "address": order.store.address if order.store else ""
+            },
+            "delivery_partner": {
+                "id": order.delivery_partner.id if order.delivery_partner else None,
+                "name": order.delivery_partner.name if order.delivery_partner else None,
+                "mobile": order.delivery_partner.mobile if order.delivery_partner else None
+            },
+            "created_at": order.created_at.strftime("%I:%M %p, %d %b %Y") if order.created_at else None,
+            "delivered_at": order.delivered_at.strftime("%I:%M %p, %d %b %Y") if order.delivered_at else None,
+            "items": [
+                {
+                    "id": it.id,
+                    "product_name": it.product_name,
+                    "brand": it.brand,
+                    "quantity": it.packed_quantity or it.requested_quantity,
+                    "unit": it.requested_unit,
+                    "unit_price": it.unit_price,
+                    "subtotal": it.subtotal,
+                    "is_available": it.is_available
+                }
+                for it in order.items
+            ]
+        }
     }
 
 

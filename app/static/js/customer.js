@@ -461,19 +461,44 @@ const CustomerModule = {
                         historyList.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">No past orders yet.</p>`;
                         return;
                     }
-                    historyList.innerHTML = data.orders.map(o => `
-                        <div class="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between mb-2">
-                            <div>
-                                <span class="font-bold text-xs text-slate-800">${o.order_number}</span>
-                                <span class="text-[10px] text-slate-400 block">${o.store_name} • ${o.created_at}</span>
-                                <span class="text-[10px] text-emerald-600 font-semibold">${o.status}</span>
+                    historyList.innerHTML = data.orders.map(o => {
+                        const itemsHtml = (o.items && o.items.length > 0)
+                            ? `<div class="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                                 <div class="font-semibold text-slate-700 mb-1">Items (${o.items.length}):</div>
+                                 <ul class="space-y-0.5">
+                                   ${o.items.map(it => `
+                                     <li class="flex justify-between text-[10px]">
+                                       <span>• ${it.product_name} (${it.quantity} ${it.unit})</span>
+                                       <span class="font-medium text-slate-800">₹${it.subtotal}</span>
+                                     </li>
+                                   `).join('')}
+                                 </ul>
+                                 <div class="flex justify-between text-[10px] text-amber-700 font-semibold mt-1 pt-1 border-t border-slate-50">
+                                   <span>Delivery Fee:</span>
+                                   <span>₹${(o.delivery_fee || 50).toFixed(2)}</span>
+                                 </div>
+                               </div>`
+                            : `<div class="text-[10px] text-slate-400 mt-1">${o.items_count || 0} items</div>`;
+
+                        return `
+                        <div class="p-3 bg-white border border-slate-200 rounded-2xl mb-2 shadow-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="font-black text-xs text-slate-800">${o.order_number}</span>
+                                    <span class="text-[10px] text-slate-500 block">${o.store_name} • ${o.created_at || ''}</span>
+                                    <span class="inline-block px-2 py-0.5 mt-1 rounded-full text-[9px] font-bold ${
+                                        o.status === 'DELIVERED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                    }">${o.status}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-sm font-black text-slate-800 block">₹${o.total_amount}</span>
+                                    <span class="text-[10px] font-semibold text-slate-500">${o.payment_mode}</span>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <span class="text-xs font-bold text-slate-800">₹${o.total_amount}</span>
-                                <span class="text-[10px] text-slate-400 block">${o.payment_mode}</span>
-                            </div>
+                            ${itemsHtml}
                         </div>
-                    `).join('');
+                    `;
+                    }).join('');
                 }
             }
         } catch (err) {

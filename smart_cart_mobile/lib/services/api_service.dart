@@ -463,6 +463,22 @@ class ApiService {
     return {};
   }
 
+  Future<List<OrderModel>> fetchCustomerOrderHistory(int customerId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/api/customer/orders/history?customer_id=$customerId'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'success') {
+          final list = data['orders'] as List;
+          return list.map((o) => OrderModel.fromJson(o)).toList();
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
+
   // 5. Merchant Dashboard & Inventory
   Future<List<OrderModel>> fetchMerchantOrders(int merchantId, {int? storeId}) async {
     var url = '${ApiConfig.baseUrl}/api/merchant/orders?merchant_id=$merchantId';
